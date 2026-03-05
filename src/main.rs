@@ -9,12 +9,12 @@ fn main() -> Result<(), eframe::Error> {
 }
 
 struct MyApp {
-    button_pressed: i32,
+    button_pressed: String,
 }
 
 impl Default for MyApp {
     fn default() -> Self {
-        Self { button_pressed: 0 }
+        Self { button_pressed: String::new() }
     }
 }
 
@@ -29,15 +29,15 @@ impl eframe::App for MyApp {
 
                 ui.set_min_size(egui::vec2(120.0, 120.0));
                 if ui.button("Android auto").clicked() {
-                    self.button_pressed = 1;
+                    self.button_pressed = "android_auto".to_string();
                 }
                 ui.set_min_size(egui::vec2(120.0, 120.0));
                 if ui.button("Music").clicked() {
-                    self.button_pressed = 2;
+                    self.button_pressed = "music".to_string();
                 }
                 ui.set_min_size(egui::vec2(120.0, 120.0));
                 if ui.button("Settings").clicked() {
-                    self.button_pressed = 3;
+                    self.button_pressed = "settings".to_string();
                 }
             });
 
