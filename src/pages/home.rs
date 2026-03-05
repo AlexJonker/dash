@@ -65,8 +65,8 @@ pub fn show(ctx: &egui::Context, palette: Palette) -> Option<HomeAction> {
         for chunk in apps.chunks(columns) {
             ui.horizontal(|ui| {
                 let spacing = ui.spacing().item_spacing.x;
-                let row_width =
-                    chunk.len() as f32 * tile_size.x + (chunk.len().saturating_sub(1) as f32) * spacing;
+                let row_width = chunk.len() as f32 * tile_size.x
+                    + (chunk.len().saturating_sub(1) as f32) * spacing;
                 let pad = ((ui.available_width() - row_width) / 2.0).max(0.0);
 
                 ui.add_space(pad);

@@ -75,7 +75,8 @@ impl eframe::App for MyApp {
                 }
             }
             AppView::Settings => {
-                let outcome: SettingsOutcome = pages::settings::show(ctx, palette, &mut self.dark_mode);
+                let outcome: SettingsOutcome =
+                    pages::settings::show(ctx, palette, &mut self.dark_mode);
                 theme_changed |= outcome.theme_changed;
 
                 if outcome.go_home {
