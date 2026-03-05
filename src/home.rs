@@ -64,6 +64,13 @@ pub fn show(ctx: &egui::Context, palette: Palette) -> Option<HomeAction> {
         let tile_size = egui::vec2(140.0, 140.0);
         for chunk in apps.chunks(columns) {
             ui.horizontal(|ui| {
+                let spacing = ui.spacing().item_spacing.x;
+                let row_width =
+                    chunk.len() as f32 * tile_size.x + (chunk.len().saturating_sub(1) as f32) * spacing;
+                let pad = ((ui.available_width() - row_width) / 2.0).max(0.0);
+
+                ui.add_space(pad);
+
                 for app in chunk {
                     let response = app_tile(ui, palette, app, tile_size);
                     if response.clicked() {
