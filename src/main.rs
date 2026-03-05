@@ -1,13 +1,12 @@
-mod home;
-mod settings;
+mod pages;
 mod theme;
 
 use std::time::Duration;
 
 use eframe::egui;
 
-use home::HomeAction;
-use settings::SettingsOutcome;
+use pages::home::HomeAction;
+use pages::settings::SettingsOutcome;
 use theme::{Palette, apply_style};
 
 fn main() -> Result<(), eframe::Error> {
@@ -71,12 +70,12 @@ impl eframe::App for MyApp {
 
         match self.view {
             AppView::Home => {
-                if let Some(HomeAction::OpenSettings) = home::show(ctx, palette) {
+                if let Some(HomeAction::OpenSettings) = pages::home::show(ctx, palette) {
                     self.view = AppView::Settings;
                 }
             }
             AppView::Settings => {
-                let outcome: SettingsOutcome = settings::show(ctx, palette, &mut self.dark_mode);
+                let outcome: SettingsOutcome = pages::settings::show(ctx, palette, &mut self.dark_mode);
                 theme_changed |= outcome.theme_changed;
 
                 if outcome.go_home {
