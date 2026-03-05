@@ -6,11 +6,19 @@ use crate::pages::Controller;
 use crate::theme::apply_style;
 
 pub fn run() -> Result<(), eframe::Error> {
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_fullscreen(true)
+            .with_decorations(false),
+        ..Default::default()
+    };
+
     eframe::run_native(
         "Miata Dash",
-        eframe::NativeOptions::default(),
+        options,
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
+            cc.egui_ctx.set_pixels_per_point(1.0);
             Ok(Box::<DashApp>::default())
         }),
     )
