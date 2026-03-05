@@ -6,6 +6,7 @@ use crate::theme::{Palette, ThemeMode};
 pub struct SettingsOutcome {
     pub go_home: bool,
     pub style_changed: bool,
+    pub settings_changed: bool,
 }
 
 pub fn show(
@@ -13,10 +14,12 @@ pub fn show(
     palette: Palette,
     theme_mode: &mut ThemeMode,
     accent_color: &mut egui::Color32,
+    clock_type: &mut u8,
 ) -> SettingsOutcome {
     let mut outcome = SettingsOutcome {
         go_home: false,
         style_changed: false,
+        settings_changed: false,
     };
 
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -87,6 +90,7 @@ pub fn show(
                             dark_mode = !dark_mode;
                             theme_mode.set_dark(dark_mode);
                             outcome.style_changed = true;
+                            outcome.settings_changed = true;
                         }
                     });
                 });
@@ -117,6 +121,64 @@ pub fn show(
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         if ui.color_edit_button_srgba(accent_color).changed() {
                             outcome.style_changed = true;
+                            outcome.settings_changed = true;
+                        }
+                    });
+                });
+            });
+
+        ui.add_space(12.0);
+
+        Frame::new()
+            .fill(palette.card)
+            .stroke(Stroke::new(1.0, palette.border))
+            .corner_radius(CornerRadius::same(18))
+            .inner_margin(Margin::symmetric(16, 14))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label(
+                            egui::RichText::new("Clock format")
+                                .size(18.0)
+                                .color(palette.foreground),
+                        );
+                        ui.label(
+                            egui::RichText::new("Switch between 24h and 12h display")
+                                .size(14.0)
+                                .color(palette.muted),
+                        );
+                    });
+
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        let label = if *clock_type == 12 { "12h" } else { "24h" };
+
+                        let fill = if *clock_type == 24 {
+                            palette.accent
+                        } else {
+                            palette.card_hover
+                        };
+
+                        let text_color = if *clock_type == 24 {
+                            palette.accent_text
+                        } else {
+                            palette.foreground
+                        };
+
+                        let stroke_color = if *clock_type == 24 {
+                            palette.accent_hover
+                        } else {
+                            palette.border
+                        };
+
+                        let button =
+                            egui::Button::new(egui::RichText::new(label).color(text_color))
+                                .fill(fill)
+                                .stroke(Stroke::new(1.0, stroke_color))
+                                .corner_radius(CornerRadius::same(10));
+
+                        if ui.add(button).clicked() {
+                            *clock_type = if *clock_type == 24 { 12 } else { 24 };
+                            outcome.settings_changed = true;
                         }
                     });
                 });

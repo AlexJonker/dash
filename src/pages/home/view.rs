@@ -23,9 +23,13 @@ fn icons_source(app_id: &str) -> egui::ImageSource<'static> {
     }
 }
 
-pub fn show(ctx: &egui::Context, palette: Palette) -> Option<HomeAction> {
+pub fn show(ctx: &egui::Context, palette: Palette, clock_type: u8) -> Option<HomeAction> {
     let now = Local::now();
-    let time_text = now.format("%H:%M").to_string();
+    let time_text = if clock_type == 12 {
+        now.format("%-I:%M %p").to_string()
+    } else {
+        now.format("%H:%M").to_string()
+    };
 
     let apps = [
         AppButton {
