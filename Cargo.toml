@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 egui = "0.33.3"
 eframe = "0.33.3"
+egui_extras = { version = "0.33.3", features = ["svg"] }
 chrono = "0.4.44"

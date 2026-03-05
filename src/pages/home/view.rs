@@ -11,8 +11,18 @@ pub enum HomeAction {
 struct AppButton {
     id: &'static str,
     name: &'static str,
-    glyph: &'static str,
 }
+
+fn icons_source(app_id: &str) -> egui::ImageSource<'static> {
+    match app_id {
+        "androidauto" => egui::include_image!("../../../assets/icons/android_auto.svg"),
+        "music" => egui::include_image!("../../../assets/icons/music.svg"),
+        "maps" => egui::include_image!("../../../assets/icons/maps.svg"),
+        "settings" => egui::include_image!("../../../assets/icons/settings.svg"),
+        _ => egui::include_image!("../../../assets/icons/none.svg"),
+    }
+}
+
 
 pub fn show(ctx: &egui::Context, palette: Palette) -> Option<HomeAction> {
     let now = Local::now();
@@ -22,22 +32,18 @@ pub fn show(ctx: &egui::Context, palette: Palette) -> Option<HomeAction> {
         AppButton {
             id: "androidauto",
             name: "Android Auto",
-            glyph: "AA",
         },
         AppButton {
             id: "music",
             name: "Music",
-            glyph: "MS",
         },
         AppButton {
             id: "maps",
             name: "Maps",
-            glyph: "MAP",
         },
         AppButton {
             id: "settings",
             name: "Settings",
-            glyph: "SET",
         },
     ];
 
@@ -123,12 +129,9 @@ fn app_tile(
                 ui.with_layout(Layout::top_down(Align::Center), |ui| {
                     ui.add_space(4.0);
                     ui.add(
-                        egui::Label::new(
-                            egui::RichText::new(app.glyph)
-                                .size(36.0)
-                                .color(palette.muted),
-                        )
-                        .selectable(false),
+                        egui::Image::new(icons_source(app.id))
+                            .fit_to_exact_size(egui::vec2(38.0, 38.0))
+                            .tint(palette.foreground),
                     );
                     ui.add_space(10.0);
                     ui.add(

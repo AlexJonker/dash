@@ -9,7 +9,10 @@ pub fn run() -> Result<(), eframe::Error> {
     eframe::run_native(
         "Miata Dash",
         eframe::NativeOptions::default(),
-        Box::new(|_cc| Ok(Box::<DashApp>::default())),
+        Box::new(|cc| {
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+            Ok(Box::<DashApp>::default())
+        }),
     )
 }
 
