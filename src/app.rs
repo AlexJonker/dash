@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use eframe::egui;
 
-use crate::pages::Controller;
+use crate::controller::Controller;
 use crate::theme::apply_style;
 
 pub fn run() -> Result<(), eframe::Error> {

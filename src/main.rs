@@ -1,5 +1,7 @@
 mod app;
-mod pages;
+mod controller;
+mod home;
+mod settings;
 mod theme;
 
 fn main() -> Result<(), eframe::Error> {

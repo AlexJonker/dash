@@ -15,11 +15,11 @@ struct AppButton {
 
 fn icons_source(app_id: &str) -> egui::ImageSource<'static> {
     match app_id {
-        "androidauto" => egui::include_image!("../../../assets/icons/android_auto.svg"),
-        "music" => egui::include_image!("../../../assets/icons/music.svg"),
-        "maps" => egui::include_image!("../../../assets/icons/maps.svg"),
-        "settings" => egui::include_image!("../../../assets/icons/settings.svg"),
-        _ => egui::include_image!("../../../assets/icons/none.svg"),
+        "androidauto" => egui::include_image!("../../assets/icons/android_auto.svg"),
+        "music" => egui::include_image!("../../assets/icons/music.svg"),
+        "maps" => egui::include_image!("../../assets/icons/maps.svg"),
+        "settings" => egui::include_image!("../../assets/icons/settings.svg"),
+        _ => egui::include_image!("../../assets/icons/none.svg"),
     }
 }
 
