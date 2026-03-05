@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui::Color32;
 
 use crate::theme::{Palette, ThemeMode};
 
@@ -13,6 +14,7 @@ enum AppView {
 pub struct Controller {
     view: AppView,
     theme_mode: ThemeMode,
+    accent_color: Color32,
     style_dirty: bool,
 }
 
@@ -21,12 +23,13 @@ impl Controller {
         Self {
             view: AppView::Home,
             theme_mode: ThemeMode::Dark,
+            accent_color: Color32::from_rgb(94, 129, 255),
             style_dirty: true,
         }
     }
 
     pub fn palette(&self) -> Palette {
-        self.theme_mode.palette()
+        self.theme_mode.palette().with_accent(self.accent_color)
     }
 
     pub fn style_needs_refresh(&self) -> bool {
@@ -47,9 +50,10 @@ impl Controller {
                 }
             }
             AppView::Settings => {
-                let outcome = settings::show(ctx, palette, &mut self.theme_mode);
+                let outcome =
+                    settings::show(ctx, palette, &mut self.theme_mode, &mut self.accent_color);
 
-                if outcome.theme_changed {
+                if outcome.style_changed {
                     self.style_dirty = true;
                 }
 

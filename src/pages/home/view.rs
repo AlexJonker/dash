@@ -23,7 +23,6 @@ fn icons_source(app_id: &str) -> egui::ImageSource<'static> {
     }
 }
 
-
 pub fn show(ctx: &egui::Context, palette: Palette) -> Option<HomeAction> {
     let now = Local::now();
     let time_text = now.format("%H:%M").to_string();
@@ -58,7 +57,7 @@ pub fn show(ctx: &egui::Context, palette: Palette) -> Option<HomeAction> {
                 egui::Label::new(
                     egui::RichText::new(time_text)
                         .size(64.0)
-                        .color(palette.foreground),
+                        .color(palette.accent),
                 )
                 .selectable(false),
             );
@@ -109,9 +108,27 @@ fn app_tile(
 ) -> egui::Response {
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
     let bg = if response.hovered() {
-        palette.card_hover
+        palette.accent_hover
     } else {
         palette.card
+    };
+
+    let tile_foreground = if response.hovered() {
+        palette.accent_text
+    } else {
+        palette.foreground
+    };
+
+    let icon_tint = if response.hovered() {
+        palette.accent_text
+    } else {
+        palette.accent
+    };
+
+    let stroke_color = if response.hovered() {
+        palette.accent
+    } else {
+        palette.border
     };
 
     if ui.is_rect_visible(rect) {
@@ -122,7 +139,7 @@ fn app_tile(
         );
         Frame::new()
             .fill(bg)
-            .stroke(Stroke::new(1.0, palette.border))
+            .stroke(Stroke::new(1.0, stroke_color))
             .corner_radius(CornerRadius::same(18))
             .inner_margin(Margin::symmetric(16, 14))
             .show(&mut child, |ui| {
@@ -131,14 +148,14 @@ fn app_tile(
                     ui.add(
                         egui::Image::new(icons_source(app.id))
                             .fit_to_exact_size(egui::vec2(38.0, 38.0))
-                            .tint(palette.foreground),
+                            .tint(icon_tint),
                     );
                     ui.add_space(10.0);
                     ui.add(
                         egui::Label::new(
                             egui::RichText::new(app.name)
                                 .size(16.0)
-                                .color(palette.foreground),
+                                .color(tile_foreground),
                         )
                         .selectable(false),
                     );
