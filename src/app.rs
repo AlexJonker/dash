@@ -26,25 +26,21 @@ pub fn run() -> Result<(), eframe::Error> {
 
 struct DashApp {
     controller: Controller,
-    style_applied: bool,
 }
 
 impl Default for DashApp {
     fn default() -> Self {
         Self {
             controller: Controller::new(),
-            style_applied: false,
         }
     }
 }
 
 impl DashApp {
     fn ensure_style(&mut self, ctx: &egui::Context) {
-        let palette = self.controller.palette();
-        if !self.style_applied || self.controller.style_needs_refresh() {
-            apply_style(ctx, palette);
+        if self.controller.style_needs_refresh() {
+            apply_style(ctx, self.controller.palette());
             self.controller.mark_style_applied();
-            self.style_applied = true;
         }
     }
 }
