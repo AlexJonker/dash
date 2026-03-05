@@ -1,14 +1,14 @@
 use eframe::egui;
 use egui::{Align, CornerRadius, Frame, Layout, Margin, Stroke};
 
-use crate::theme::Palette;
+use crate::theme::{Palette, ThemeMode};
 
 pub struct SettingsOutcome {
     pub go_home: bool,
     pub theme_changed: bool,
 }
 
-pub fn show(ctx: &egui::Context, palette: Palette, dark_mode: &mut bool) -> SettingsOutcome {
+pub fn show(ctx: &egui::Context, palette: Palette, theme_mode: &mut ThemeMode) -> SettingsOutcome {
     let mut outcome = SettingsOutcome {
         go_home: false,
         theme_changed: false,
@@ -40,7 +40,8 @@ pub fn show(ctx: &egui::Context, palette: Palette, dark_mode: &mut bool) -> Sett
             .corner_radius(CornerRadius::same(18))
             .inner_margin(Margin::symmetric(16, 14))
             .show(ui, |ui| {
-                let before = *dark_mode;
+                let before = theme_mode.is_dark();
+                let mut dark_mode = before;
 
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
@@ -57,9 +58,10 @@ pub fn show(ctx: &egui::Context, palette: Palette, dark_mode: &mut bool) -> Sett
                     });
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        let label = if *dark_mode { "On" } else { "Off" };
-                        let response = ui.toggle_value(dark_mode, label);
-                        if response.changed() && *dark_mode != before {
+                        let label = if dark_mode { "On" } else { "Off" };
+                        let response = ui.toggle_value(&mut dark_mode, label);
+                        if response.changed() && dark_mode != before {
+                            theme_mode.set_dark(dark_mode);
                             outcome.theme_changed = true;
                         }
                     });
