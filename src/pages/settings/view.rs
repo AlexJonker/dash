@@ -58,8 +58,33 @@ pub fn show(
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         let label = if dark_mode { "On" } else { "Off" };
-                        let response = ui.toggle_value(&mut dark_mode, label);
-                        if response.changed() && dark_mode != before {
+
+                        let fill = if dark_mode {
+                            palette.accent
+                        } else {
+                            palette.card_hover
+                        };
+
+                        let text_color = if dark_mode {
+                            palette.accent_text
+                        } else {
+                            palette.foreground
+                        };
+
+                        let stroke_color = if dark_mode {
+                            palette.accent_hover
+                        } else {
+                            palette.border
+                        };
+
+                        let button =
+                            egui::Button::new(egui::RichText::new(label).color(text_color))
+                                .fill(fill)
+                                .stroke(Stroke::new(1.0, stroke_color))
+                                .corner_radius(CornerRadius::same(10));
+
+                        if ui.add(button).clicked() {
+                            dark_mode = !dark_mode;
                             theme_mode.set_dark(dark_mode);
                             outcome.style_changed = true;
                         }
