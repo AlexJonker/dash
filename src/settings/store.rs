@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use egui::Color32;
 use serde::{Deserialize, Serialize};
 
-use crate::theme::ThemeMode;
+use crate::theme::{ClockFormat, ThemeMode};
 
 const SETTINGS_PATH: &str = "./settings.json";
 
@@ -29,7 +29,7 @@ impl Default for PersistedSettings {
 pub struct SettingsState {
     pub theme_mode: ThemeMode,
     pub accent_color: Color32,
-    pub clock_type: u8,
+    pub clock_format: ClockFormat,
 }
 
 impl PersistedSettings {
@@ -69,13 +69,11 @@ impl PersistedSettings {
         SettingsState {
             theme_mode,
             accent_color: Color32::from_rgba_premultiplied(r, g, b, a),
-            clock_type: self.clock_type,
+            clock_format: ClockFormat::from_u8(self.clock_type),
         }
     }
 
     fn from_state(state: SettingsState) -> Self {
-        let normalized_clock_type = if state.clock_type == 12 { 12 } else { 24 };
-
         Self {
             dark_mode: state.theme_mode.is_dark(),
             accent_color: [
@@ -84,7 +82,7 @@ impl PersistedSettings {
                 state.accent_color.b(),
                 state.accent_color.a(),
             ],
-            clock_type: normalized_clock_type,
+            clock_type: state.clock_format.as_u8(),
         }
     }
 }

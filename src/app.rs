@@ -7,6 +7,10 @@ use crate::theme::apply_style;
 
 pub fn run() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
+        renderer: eframe::Renderer::Glow,
+        multisampling: 0,
+        depth_buffer: 0,
+        stencil_buffer: 0,
         viewport: egui::ViewportBuilder::default()
             .with_fullscreen(true)
             .with_decorations(false),
@@ -36,20 +40,10 @@ impl Default for DashApp {
     }
 }
 
-impl DashApp {
-    fn ensure_style(&mut self, ctx: &egui::Context) {
-        if self.controller.style_needs_refresh() {
-            apply_style(ctx, self.controller.palette());
-            self.controller.mark_style_applied();
-        }
-    }
-}
-
 impl eframe::App for DashApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.ensure_style(ctx);
+        apply_style(ctx, self.controller.palette());
         self.controller.update(ctx);
-        self.ensure_style(ctx);
 
         ctx.request_repaint_after(Duration::from_millis(500));
     }

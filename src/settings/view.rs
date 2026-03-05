@@ -1,7 +1,7 @@
 use eframe::egui;
 use egui::{Align, CornerRadius, Frame, Layout, Margin, Stroke};
 
-use crate::theme::{Palette, ThemeMode};
+use crate::theme::{ClockFormat, Palette, ThemeMode};
 
 pub struct SettingsOutcome {
     pub go_home: bool,
@@ -14,7 +14,7 @@ pub fn show(
     palette: Palette,
     theme_mode: &mut ThemeMode,
     accent_color: &mut egui::Color32,
-    clock_type: &mut u8,
+    clock_format: &mut ClockFormat,
 ) -> SettingsOutcome {
     let mut outcome = SettingsOutcome {
         go_home: false,
@@ -150,21 +150,21 @@ pub fn show(
                     });
 
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        let label = if *clock_type == 12 { "12h" } else { "24h" };
+                        let label = if clock_format.is_12h() { "12h" } else { "24h" };
 
-                        let fill = if *clock_type == 24 {
+                        let fill = if !clock_format.is_12h() {
                             palette.accent
                         } else {
                             palette.card_hover
                         };
 
-                        let text_color = if *clock_type == 24 {
+                        let text_color = if !clock_format.is_12h() {
                             palette.accent_text
                         } else {
                             palette.foreground
                         };
 
-                        let stroke_color = if *clock_type == 24 {
+                        let stroke_color = if !clock_format.is_12h() {
                             palette.accent_hover
                         } else {
                             palette.border
@@ -177,7 +177,7 @@ pub fn show(
                                 .corner_radius(CornerRadius::same(10));
 
                         if ui.add(button).clicked() {
-                            *clock_type = if *clock_type == 24 { 12 } else { 24 };
+                            clock_format.toggle();
                             outcome.settings_changed = true;
                         }
                     });

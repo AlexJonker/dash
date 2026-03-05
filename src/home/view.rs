@@ -2,7 +2,7 @@ use chrono::Local;
 use eframe::egui;
 use egui::{Align, CornerRadius, Frame, Layout, Margin, Sense, Stroke, UiBuilder};
 
-use crate::theme::Palette;
+use crate::theme::{ClockFormat, Palette};
 
 pub enum HomeAction {
     OpenSettings,
@@ -23,9 +23,13 @@ fn icons_source(app_id: &str) -> egui::ImageSource<'static> {
     }
 }
 
-pub fn show(ctx: &egui::Context, palette: Palette, clock_type: u8) -> Option<HomeAction> {
+pub fn show(
+    ctx: &egui::Context,
+    palette: Palette,
+    clock_format: ClockFormat,
+) -> Option<HomeAction> {
     let now = Local::now();
-    let time_text = if clock_type == 12 {
+    let time_text = if clock_format.is_12h() {
         now.format("%-I:%M %p").to_string()
     } else {
         now.format("%H:%M").to_string()
