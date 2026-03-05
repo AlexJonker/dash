@@ -746,6 +746,8 @@ dependencies = [
  "eframe",
  "egui",
  "egui_extras",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
