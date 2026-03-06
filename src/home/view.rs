@@ -6,6 +6,11 @@ use crate::theme::{ClockFormat, Palette};
 
 pub enum HomeAction {
     OpenSettings,
+    OpenAndroidAuto,
+}
+
+pub enum AndroidAutoMenuAction {
+    GoHome,
 }
 
 struct AppButton {
@@ -55,6 +60,7 @@ pub fn show(
     ];
 
     let mut open_settings = false;
+    let mut open_android_auto = false;
 
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.set_width(ui.available_width());
@@ -89,6 +95,8 @@ pub fn show(
                     if response.clicked() {
                         if app.id == "settings" {
                             open_settings = true;
+                        } else if app.id == "androidauto" {
+                            open_android_auto = true;
                         } else {
                             println!("Pressed: {}, ID: {}", app.name, app.id);
                         }
@@ -103,6 +111,55 @@ pub fn show(
 
     if open_settings {
         Some(HomeAction::OpenSettings)
+    } else if open_android_auto {
+        Some(HomeAction::OpenAndroidAuto)
+    } else {
+        None
+    }
+}
+
+pub fn show_android_auto_menu(
+    ctx: &egui::Context,
+    palette: Palette,
+) -> Option<AndroidAutoMenuAction> {
+    let mut go_home = false;
+
+    egui::CentralPanel::default().show(ctx, |ui| {
+        ui.vertical_centered(|ui| {
+            ui.add_space(80.0);
+            ui.add(
+                egui::Label::new(
+                    egui::RichText::new("Android Auto")
+                        .size(42.0)
+                        .color(palette.accent),
+                )
+                .selectable(false),
+            );
+            ui.add_space(20.0);
+            ui.add(
+                egui::Label::new(
+                    egui::RichText::new("Not implemented yet.\nWill come eventually.")
+                        .size(30.0)
+                        .color(palette.foreground),
+                )
+                .selectable(false),
+            );
+            ui.add_space(28.0);
+
+            let back = ui.add_sized(
+                egui::vec2(160.0, 48.0),
+                egui::Button::new(egui::RichText::new("Back").color(palette.accent_text))
+                    .fill(palette.accent),
+            );
+
+            if back.clicked() {
+                go_home = true;
+            }
+        });
+    });
+
+    if go_home {
+        Some(AndroidAutoMenuAction::GoHome)
     } else {
         None
     }

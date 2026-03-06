@@ -1,3 +1,3 @@
 mod view;
 
-pub use view::{HomeAction, show};
+pub use view::{AndroidAutoMenuAction, HomeAction, show, show_android_auto_menu};

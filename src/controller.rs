@@ -8,6 +8,7 @@ use super::{home, settings};
 enum AppView {
     Home,
     Settings,
+    AndroidAutoMenu,
 }
 
 pub struct Controller {
@@ -32,10 +33,12 @@ impl Controller {
 
         match self.view {
             AppView::Home => {
-                if let Some(home::HomeAction::OpenSettings) =
-                    home::show(ctx, palette, self.settings_session.clock_format)
+                if let Some(action) = home::show(ctx, palette, self.settings_session.clock_format)
                 {
-                    self.view = AppView::Settings;
+                    match action {
+                        home::HomeAction::OpenSettings => self.view = AppView::Settings,
+                        home::HomeAction::OpenAndroidAuto => self.view = AppView::AndroidAutoMenu,
+                    }
                 }
             }
             AppView::Settings => {
@@ -52,6 +55,13 @@ impl Controller {
                 }
 
                 if outcome.go_home {
+                    self.view = AppView::Home;
+                }
+            }
+            AppView::AndroidAutoMenu => {
+                if let Some(home::AndroidAutoMenuAction::GoHome) =
+                    home::show_android_auto_menu(ctx, palette)
+                {
                     self.view = AppView::Home;
                 }
             }
