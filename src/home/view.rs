@@ -5,6 +5,7 @@ use egui::{Align, CornerRadius, Frame, Layout, Margin, Sense, Stroke, UiBuilder}
 use crate::theme::{ClockFormat, Palette};
 
 pub enum HomeAction {
+    OpenMusic,
     OpenSettings,
     OpenAndroidAuto,
 }
@@ -60,6 +61,7 @@ pub fn show(
     ];
 
     let mut open_settings = false;
+    let mut open_music = false;
     let mut open_android_auto = false;
 
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -95,6 +97,8 @@ pub fn show(
                     if response.clicked() {
                         if app.id == "settings" {
                             open_settings = true;
+                        } else if app.id == "music" {
+                            open_music = true;
                         } else if app.id == "androidauto" {
                             open_android_auto = true;
                         } else {
@@ -111,6 +115,8 @@ pub fn show(
 
     if open_settings {
         Some(HomeAction::OpenSettings)
+    } else if open_music {
+        Some(HomeAction::OpenMusic)
     } else if open_android_auto {
         Some(HomeAction::OpenAndroidAuto)
     } else {

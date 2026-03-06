@@ -2,11 +2,12 @@ use eframe::egui;
 
 use crate::theme::Palette;
 
-use super::{home, settings};
+use super::{home, music, settings};
 
 #[derive(Clone, Copy, PartialEq)]
 enum AppView {
     Home,
+    Music,
     Settings,
     AndroidAutoMenu,
 }
@@ -14,6 +15,7 @@ enum AppView {
 pub struct Controller {
     view: AppView,
     settings_session: settings::SettingsSession,
+    music_session: music::MusicSession,
 }
 
 impl Controller {
@@ -21,6 +23,7 @@ impl Controller {
         Self {
             view: AppView::Home,
             settings_session: settings::SettingsSession::load(),
+            music_session: music::MusicSession::new(),
         }
     }
 
@@ -33,12 +36,19 @@ impl Controller {
 
         match self.view {
             AppView::Home => {
-                if let Some(action) = home::show(ctx, palette, self.settings_session.clock_format)
-                {
+                if let Some(action) = home::show(ctx, palette, self.settings_session.clock_format) {
                     match action {
+                        home::HomeAction::OpenMusic => self.view = AppView::Music,
                         home::HomeAction::OpenSettings => self.view = AppView::Settings,
                         home::HomeAction::OpenAndroidAuto => self.view = AppView::AndroidAutoMenu,
                     }
+                }
+            }
+            AppView::Music => {
+                if let Some(music::MusicAction::GoHome) =
+                    music::show(ctx, palette, &mut self.music_session)
+                {
+                    self.view = AppView::Home;
                 }
             }
             AppView::Settings => {

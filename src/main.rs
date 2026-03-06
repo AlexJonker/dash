@@ -1,6 +1,7 @@
 mod app;
 mod controller;
 mod home;
+mod music;
 mod settings;
 mod theme;
 

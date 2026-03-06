@@ -1,0 +1,282 @@
+use std::collections::HashMap;
+use std::fs::File;
+use std::path::{Path, PathBuf};
+
+use eframe::egui;
+use lofty::file::TaggedFileExt;
+use lofty::probe::Probe;
+use rand::rng;
+use rand::seq::SliceRandom;
+use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player};
+
+const MUSIC_ROOT: &str = "/storage/music";
+
+#[derive(Clone)]
+pub struct Track {
+    pub path: PathBuf,
+    pub artist: String,
+    pub album: String,
+    pub title: String,
+}
+
+pub struct MusicSession {
+    tracks: Vec<Track>,
+    queue: Vec<usize>,
+    queue_pos: usize,
+    device_sink: Option<MixerDeviceSink>,
+    player: Option<Player>,
+    paused: bool,
+    last_error: Option<String>,
+    cover_cache: HashMap<usize, Option<egui::TextureHandle>>,
+}
+
+impl MusicSession {
+    pub fn new() -> Self {
+        let tracks = scan_music_library(Path::new(MUSIC_ROOT));
+        let (device_sink, player, error) = match DeviceSinkBuilder::open_default_sink() {
+            Ok(sink) => {
+                let player = Player::connect_new(sink.mixer());
+                (Some(sink), Some(player), None)
+            }
+            Err(err) => (None, None, Some(format!("Audio output unavailable: {err}"))),
+        };
+
+        Self {
+            tracks,
+            queue: Vec::new(),
+            queue_pos: 0,
+            device_sink,
+            player,
+            paused: false,
+            last_error: error,
+            cover_cache: HashMap::new(),
+        }
+    }
+
+    pub fn tracks_count(&self) -> usize {
+        self.tracks.len()
+    }
+
+    pub fn current_track(&self) -> Option<&Track> {
+        self.current_track_index()
+            .and_then(|idx| self.tracks.get(idx))
+    }
+
+    pub fn current_cover(&mut self, ctx: &egui::Context) -> Option<&egui::TextureHandle> {
+        let idx = self.current_track_index()?;
+
+        if !self.cover_cache.contains_key(&idx) {
+            let texture = self
+                .tracks
+                .get(idx)
+                .and_then(|track| extract_cover_texture(ctx, &track.path));
+            self.cover_cache.insert(idx, texture);
+        }
+
+        self.cover_cache
+            .get(&idx)
+            .and_then(|texture| texture.as_ref())
+    }
+
+    pub fn last_error(&self) -> Option<&str> {
+        self.last_error.as_deref()
+    }
+
+    pub fn is_playing(&self) -> bool {
+        self.player
+            .as_ref()
+            .map(|player| !player.is_paused() && !player.empty())
+            .unwrap_or(false)
+    }
+
+    pub fn shuffle_all(&mut self) {
+        if self.tracks.is_empty() {
+            return;
+        }
+
+        self.queue = (0..self.tracks.len()).collect();
+        self.queue.shuffle(&mut rng());
+        self.queue_pos = 0;
+        self.play_current();
+    }
+
+    pub fn play_pause_toggle(&mut self) {
+        if self.player.is_none() {
+            if self.queue.is_empty() {
+                self.shuffle_all();
+            } else {
+                self.play_current();
+            }
+            return;
+        }
+
+        if let Some(sink) = &self.player {
+            if self.paused {
+                sink.play();
+                self.paused = false;
+            } else {
+                sink.pause();
+                self.paused = true;
+            }
+        }
+    }
+
+    pub fn next(&mut self) {
+        if self.queue.is_empty() {
+            self.shuffle_all();
+            return;
+        }
+
+        self.queue_pos = (self.queue_pos + 1) % self.queue.len();
+        self.play_current();
+    }
+
+    pub fn previous(&mut self) {
+        if self.queue.is_empty() {
+            self.shuffle_all();
+            return;
+        }
+
+        self.queue_pos = if self.queue_pos == 0 {
+            self.queue.len() - 1
+        } else {
+            self.queue_pos - 1
+        };
+        self.play_current();
+    }
+
+    pub fn tick(&mut self) {
+        let finished = self
+            .player
+            .as_ref()
+            .map(|sink| sink.empty() && !self.paused)
+            .unwrap_or(false);
+
+        if finished {
+            self.next();
+        }
+    }
+
+    fn current_track_index(&self) -> Option<usize> {
+        self.queue.get(self.queue_pos).copied()
+    }
+
+    fn play_current(&mut self) {
+        let Some(track_idx) = self.current_track_index() else {
+            return;
+        };
+
+        let Some(player) = &self.player else {
+            self.last_error = Some("No audio output available".to_string());
+            return;
+        };
+
+        let track = &self.tracks[track_idx];
+
+        let file = match File::open(&track.path) {
+            Ok(file) => file,
+            Err(err) => {
+                self.last_error = Some(format!("Failed to open file: {err}"));
+                return;
+            }
+        };
+
+        let decoder = match Decoder::try_from(file) {
+            Ok(decoder) => decoder,
+            Err(err) => {
+                self.last_error = Some(format!("Failed to decode audio: {err}"));
+                return;
+            }
+        };
+
+        player.clear();
+        player.append(decoder);
+        player.play();
+
+        self.paused = false;
+        self.last_error = None;
+
+        // Keep the device sink alive for playback lifetime.
+        let _ = self.device_sink.as_ref();
+    }
+}
+
+fn scan_music_library(root: &Path) -> Vec<Track> {
+    let mut tracks = Vec::new();
+
+    fn visit_dir(root: &Path, dir: &Path, out: &mut Vec<Track>) {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                visit_dir(root, &path, out);
+                continue;
+            }
+
+            if !is_supported_audio(&path) {
+                continue;
+            }
+
+            let relative = path.strip_prefix(root).unwrap_or(&path);
+            let mut comps = relative.components();
+            let artist = comps
+                .next()
+                .map(|c| c.as_os_str().to_string_lossy().to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| "Unknown Artist".to_string());
+            let album = comps
+                .next()
+                .map(|c| c.as_os_str().to_string_lossy().to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| "Unknown Album".to_string());
+
+            let title = path
+                .file_stem()
+                .map(|name| name.to_string_lossy().to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| "Unknown Track".to_string());
+
+            out.push(Track {
+                path,
+                artist,
+                album,
+                title,
+            });
+        }
+    }
+
+    visit_dir(root, root, &mut tracks);
+    tracks
+}
+
+fn is_supported_audio(path: &Path) -> bool {
+    let ext = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_ascii_lowercase());
+
+    matches!(
+        ext.as_deref(),
+        Some("mp3") | Some("flac") | Some("m4a") | Some("aac") | Some("wav") | Some("ogg")
+    )
+}
+
+fn extract_cover_texture(ctx: &egui::Context, path: &Path) -> Option<egui::TextureHandle> {
+    let tagged = Probe::open(path).ok()?.read().ok()?;
+    let tag = tagged.primary_tag().or_else(|| tagged.first_tag())?;
+    let pic = tag.pictures().first()?;
+    let image = image::load_from_memory(pic.data()).ok()?.to_rgba8();
+
+    let width = usize::try_from(image.width()).ok()?;
+    let height = usize::try_from(image.height()).ok()?;
+    let color_image = egui::ColorImage::from_rgba_unmultiplied([width, height], image.as_raw());
+
+    Some(ctx.load_texture(
+        format!("cover-{}", path.display()),
+        color_image,
+        egui::TextureOptions::LINEAR,
+    ))
+}
