@@ -148,7 +148,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) {
                 }
                 ui.add_space(20.0);
 
-                ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                     let btn_w = 64.0;
                     let play_w = 80.0;
                     let gap = 20.0;
