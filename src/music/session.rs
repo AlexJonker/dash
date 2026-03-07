@@ -7,8 +7,6 @@ use eframe::egui;
 use lofty::file::AudioFile;
 use lofty::file::TaggedFileExt;
 use lofty::probe::Probe;
-use rand::rng;
-use rand::seq::SliceRandom;
 use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player};
 
 #[derive(Clone)]
@@ -113,28 +111,22 @@ impl MusicSession {
         }
     }
 
-    pub fn shuffle_all(&mut self) {
-        if self.tracks.is_empty() {
+    pub fn play_pause_toggle(&mut self) {
+        if !self.ensure_queue_initialized() {
             return;
         }
 
-        self.queue = (0..self.tracks.len()).collect();
-        self.queue.shuffle(&mut rng());
-        self.queue_pos = 0;
-        self.play_current();
-    }
-
-    pub fn play_pause_toggle(&mut self) {
         if self.player.is_none() {
-            if self.queue.is_empty() {
-                self.shuffle_all();
-            } else {
-                self.play_current();
-            }
+            self.play_current();
             return;
         }
 
         if let Some(sink) = &self.player {
+            if sink.empty() {
+                self.play_current();
+                return;
+            }
+
             if self.paused {
                 sink.play();
                 self.paused = false;
@@ -146,8 +138,7 @@ impl MusicSession {
     }
 
     pub fn next(&mut self) {
-        if self.queue.is_empty() {
-            self.shuffle_all();
+        if !self.ensure_queue_initialized() {
             return;
         }
 
@@ -156,8 +147,7 @@ impl MusicSession {
     }
 
     pub fn previous(&mut self) {
-        if self.queue.is_empty() {
-            self.shuffle_all();
+        if !self.ensure_queue_initialized() {
             return;
         }
 
@@ -183,6 +173,15 @@ impl MusicSession {
 
     fn current_track_index(&self) -> Option<usize> {
         self.queue.get(self.queue_pos).copied()
+    }
+
+    fn ensure_queue_initialized(&mut self) -> bool {
+        if self.queue.is_empty() && !self.tracks.is_empty() {
+            self.queue = (0..self.tracks.len()).collect();
+            self.queue_pos = 0;
+        }
+
+        !self.queue.is_empty()
     }
 
     fn play_current(&mut self) {

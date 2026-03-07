@@ -8,7 +8,6 @@ use crate::theme::Palette;
 
 #[derive(Clone, Copy)]
 enum ControlIcon {
-    Shuffle,
     Previous,
     Play,
     Pause,
@@ -17,7 +16,6 @@ enum ControlIcon {
 
 fn control_icon_source(icon: ControlIcon) -> ImageSource<'static> {
     match icon {
-        ControlIcon::Shuffle => egui::include_image!("../../assets/icons/shuffle.svg"),
         ControlIcon::Previous => egui::include_image!("../../assets/icons/previous.svg"),
         ControlIcon::Play => egui::include_image!("../../assets/icons/play.svg"),
         ControlIcon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
@@ -76,7 +74,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) {
                     ui.label(RichText::new(&track.album).size(16.0).color(palette.muted));
                 } else {
                     ui.label(
-                        RichText::new("Press Shuffle to start")
+                        RichText::new("Press Play to start")
                             .size(24.0)
                             .color(palette.muted),
                     );
@@ -149,24 +147,14 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) {
                 ui.add_space(20.0);
 
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                    let btn_w = 64.0;
-                    let play_w = 80.0;
+                    let btn_w = 100.0;
+                    let play_w = 150.0;
                     let gap = 20.0;
 
                     let row_w = btn_w * 2.0 + play_w + gap * 2.0;
                     let padding = ((total_w - row_w) / 2.0).max(0.0);
                     ui.add_space(padding);
 
-                    // icon_btn(
-                    //     ui,
-                    //     palette,
-                    //     control_icon_source(ControlIcon::Shuffle),
-                    //     btn_w,
-                    //     btn_w,
-                    //     false,
-                    //     || session.shuffle_all(),
-                    // );
-                    // ui.add_space(gap);
                     icon_btn(
                         ui,
                         palette,
