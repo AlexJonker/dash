@@ -56,10 +56,6 @@ impl MusicSession {
         }
     }
 
-    pub fn tracks_count(&self) -> usize {
-        self.tracks.len()
-    }
-
     pub fn current_track(&self) -> Option<&Track> {
         self.current_track_index()
             .and_then(|idx| self.tracks.get(idx))
