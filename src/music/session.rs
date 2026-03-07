@@ -77,10 +77,6 @@ impl MusicSession {
             .and_then(|texture| texture.as_ref())
     }
 
-    pub fn last_error(&self) -> Option<&str> {
-        self.last_error.as_deref()
-    }
-
     pub fn is_playing(&self) -> bool {
         self.player
             .as_ref()

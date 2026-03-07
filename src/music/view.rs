@@ -1,11 +1,33 @@
 use eframe::egui;
-use egui::{Align, Color32, CornerRadius, Frame, Pos2, Rect, RichText, Stroke, Vec2};
+use egui::{
+    Align, Color32, CornerRadius, Direction, Frame, ImageSource, Pos2, Rect, RichText, Stroke,
+    UiBuilder, Vec2,
+};
 
 use super::session::MusicSession;
 use crate::theme::Palette;
 
 pub enum MusicAction {
     GoHome,
+}
+
+#[derive(Clone, Copy)]
+enum ControlIcon {
+    Shuffle,
+    Previous,
+    Play,
+    Pause,
+    Next,
+}
+
+fn control_icon_source(icon: ControlIcon) -> ImageSource<'static> {
+    match icon {
+        ControlIcon::Shuffle => egui::include_image!("../../assets/icons/shuffle.svg"),
+        ControlIcon::Previous => egui::include_image!("../../assets/icons/previous.svg"),
+        ControlIcon::Play => egui::include_image!("../../assets/icons/play.svg"),
+        ControlIcon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
+        ControlIcon::Next => egui::include_image!("../../assets/icons/next.svg"),
+    }
 }
 
 pub fn show(
@@ -161,20 +183,36 @@ pub fn show(
                     let row_w = btn_w * 4.0 + play_w + gap * 4.0;
                     ui.add_space((total_w - row_w) / 2.0);
 
-                    icon_btn(ui, palette, "⇌", btn_w, btn_h, false, || {
-                        session.shuffle_all()
-                    });
-                    ui.add_space(gap);
-
-                    icon_btn(ui, palette, "⏮", btn_w, btn_h, false, || {
-                        session.previous()
-                    });
+                    icon_btn(
+                        ui,
+                        palette,
+                        control_icon_source(ControlIcon::Shuffle),
+                        btn_w,
+                        btn_h,
+                        false,
+                        || session.shuffle_all(),
+                    );
                     ui.add_space(gap);
 
                     icon_btn(
                         ui,
                         palette,
-                        if session.is_playing() { "⏸" } else { "▶" },
+                        control_icon_source(ControlIcon::Previous),
+                        btn_w,
+                        btn_h,
+                        false,
+                        || session.previous(),
+                    );
+                    ui.add_space(gap);
+
+                    icon_btn(
+                        ui,
+                        palette,
+                        control_icon_source(if session.is_playing() {
+                            ControlIcon::Pause
+                        } else {
+                            ControlIcon::Play
+                        }),
                         play_w,
                         btn_h,
                         true,
@@ -182,7 +220,15 @@ pub fn show(
                     );
                     ui.add_space(gap);
 
-                    icon_btn(ui, palette, "⏭", btn_w, btn_h, false, || session.next());
+                    icon_btn(
+                        ui,
+                        palette,
+                        control_icon_source(ControlIcon::Next),
+                        btn_w,
+                        btn_h,
+                        false,
+                        || session.next(),
+                    );
                 });
             });
         });
@@ -193,31 +239,39 @@ pub fn show(
 fn icon_btn(
     ui: &mut egui::Ui,
     palette: Palette,
-    icon: &str,
+    icon: ImageSource<'static>,
     w: f32,
     h: f32,
     primary: bool,
     mut on_click: impl FnMut(),
 ) {
-    let (fill, text_color) = if primary {
-        (palette.accent, palette.accent_text)
+    let (fill, icon_color, hover_fill) = if primary {
+        (palette.accent, palette.accent_text, palette.accent_hover)
     } else {
-        (palette.card, palette.foreground)
+        (palette.card, palette.foreground, palette.card_hover)
     };
 
-    if ui
-        .add_sized(
-            [w, h],
-            egui::Button::new(
-                RichText::new(icon)
-                    .size(if primary { 32.0 } else { 26.0 })
-                    .color(text_color),
-            )
-            .fill(fill)
-            .corner_radius(CornerRadius::same(if primary { 44 } else { 36 })),
-        )
-        .clicked()
-    {
+    let rounding = CornerRadius::same(if primary { 44 } else { 36 });
+
+    let (rect, response) = ui.allocate_exact_size(Vec2::new(w, h), egui::Sense::click());
+    if ui.is_rect_visible(rect) {
+        let mut child = ui.new_child(
+            UiBuilder::new()
+                .max_rect(rect)
+                .layout(egui::Layout::centered_and_justified(Direction::LeftToRight)),
+        );
+
+        let bg = if response.hovered() { hover_fill } else { fill };
+        child.painter().rect_filled(rect, rounding, bg);
+
+        child.add(
+            egui::Image::new(icon)
+                .fit_to_exact_size(Vec2::splat(h * 0.48))
+                .tint(icon_color),
+        );
+    }
+
+    if response.clicked() {
         on_click();
     }
 }
