@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use eframe::egui;
+use lofty::file::AudioFile;
 use lofty::file::TaggedFileExt;
 use lofty::probe::Probe;
 use rand::rng;
@@ -15,6 +17,7 @@ pub struct Track {
     pub artist: String,
     pub album: String,
     pub title: String,
+    pub duration: Duration,
 }
 
 pub struct MusicSession {
@@ -87,6 +90,35 @@ impl MusicSession {
             .as_ref()
             .map(|player| !player.is_paused() && !player.empty())
             .unwrap_or(false)
+    }
+
+    pub fn current_position_secs(&self) -> f32 {
+        self.player
+            .as_ref()
+            .map(|player| player.get_pos().as_secs_f32())
+            .unwrap_or(0.0)
+    }
+
+    pub fn current_duration_secs(&self) -> Option<f32> {
+        let secs = self.current_track()?.duration.as_secs_f32();
+        if secs > 0.0 { Some(secs) } else { None }
+    }
+
+    pub fn seek_to_secs(&mut self, secs: f32) {
+        let Some(player) = &self.player else {
+            return;
+        };
+
+        let Some(duration) = self.current_track().map(|track| track.duration) else {
+            return;
+        };
+
+        let target_secs = secs.clamp(0.0, duration.as_secs_f32());
+        let target = Duration::from_secs_f32(target_secs);
+
+        if let Err(err) = player.try_seek(target) {
+            self.last_error = Some(format!("Failed to seek: {err}"));
+        }
     }
 
     pub fn shuffle_all(&mut self) {
@@ -239,11 +271,18 @@ fn scan_music_library(folder: &Path) -> Vec<Track> {
                 .filter(|s| !s.is_empty())
                 .unwrap_or_else(|| "Unknown Track".to_string());
 
+            let duration = Probe::open(&path)
+                .ok()
+                .and_then(|probe| probe.read().ok())
+                .map(|tagged| tagged.properties().duration())
+                .unwrap_or(Duration::ZERO);
+
             out.push(Track {
                 path,
                 artist,
                 album,
                 title,
+                duration,
             });
         }
     }
