@@ -9,8 +9,6 @@ use rand::rng;
 use rand::seq::SliceRandom;
 use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player};
 
-const MUSIC_ROOT: &str = "/storage/music";
-
 #[derive(Clone)]
 pub struct Track {
     pub path: PathBuf,
@@ -31,8 +29,10 @@ pub struct MusicSession {
 }
 
 impl MusicSession {
-    pub fn new() -> Self {
-        let tracks = scan_music_library(Path::new(MUSIC_ROOT));
+    pub fn new(music_folder: &str) -> Self {
+        let folder = PathBuf::from(music_folder);
+
+        let tracks = scan_music_library(&folder);
         let (device_sink, player, error) = match DeviceSinkBuilder::open_default_sink() {
             Ok(sink) => {
                 let player = Player::connect_new(sink.mixer());
@@ -201,10 +201,10 @@ impl MusicSession {
     }
 }
 
-fn scan_music_library(root: &Path) -> Vec<Track> {
+fn scan_music_library(folder: &Path) -> Vec<Track> {
     let mut tracks = Vec::new();
 
-    fn visit_dir(root: &Path, dir: &Path, out: &mut Vec<Track>) {
+    fn visit_dir(folder: &Path, dir: &Path, out: &mut Vec<Track>) {
         let Ok(entries) = std::fs::read_dir(dir) else {
             return;
         };
@@ -212,7 +212,7 @@ fn scan_music_library(root: &Path) -> Vec<Track> {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                visit_dir(root, &path, out);
+                visit_dir(folder, &path, out);
                 continue;
             }
 
@@ -220,7 +220,7 @@ fn scan_music_library(root: &Path) -> Vec<Track> {
                 continue;
             }
 
-            let relative = path.strip_prefix(root).unwrap_or(&path);
+            let relative = path.strip_prefix(folder).unwrap_or(&path);
             let mut comps = relative.components();
             let artist = comps
                 .next()
@@ -248,7 +248,7 @@ fn scan_music_library(root: &Path) -> Vec<Track> {
         }
     }
 
-    visit_dir(root, root, &mut tracks);
+    visit_dir(folder, folder, &mut tracks);
     tracks
 }
 

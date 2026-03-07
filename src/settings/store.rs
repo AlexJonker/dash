@@ -13,23 +13,28 @@ struct PersistedSettings {
     accent_color: [u8; 4],
     #[serde(default)]
     clock_type: u8,
+    #[serde(default)]
+    music_folder: String,
 }
 
+// Default settings
 impl Default for PersistedSettings {
     fn default() -> Self {
         Self {
             dark_mode: true,
             accent_color: [94, 129, 255, 255],
             clock_type: 24,
+            music_folder: "/storage/music".to_string(),
         }
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct SettingsState {
     pub theme_mode: ThemeMode,
     pub accent_color: Color32,
     pub clock_format: ClockFormat,
+    pub music_folder: String,
 }
 
 impl PersistedSettings {
@@ -38,11 +43,7 @@ impl PersistedSettings {
             return Self::default();
         };
 
-        let mut settings: Self = serde_json::from_str(&content).unwrap_or_default();
-
-        if settings.clock_type != 12 && settings.clock_type != 24 {
-            settings.clock_type = 24;
-        }
+        let settings: Self = serde_json::from_str(&content).unwrap_or_default();
 
         settings
     }
@@ -70,6 +71,7 @@ impl PersistedSettings {
             theme_mode,
             accent_color: Color32::from_rgba_premultiplied(r, g, b, a),
             clock_format: ClockFormat::from_u8(self.clock_type),
+            music_folder: self.music_folder.clone(),
         }
     }
 
@@ -83,6 +85,7 @@ impl PersistedSettings {
                 state.accent_color.a(),
             ],
             clock_type: state.clock_format.as_u8(),
+            music_folder: state.music_folder,
         }
     }
 }
@@ -91,7 +94,7 @@ pub fn load_state() -> SettingsState {
     let settings_path = Path::new(SETTINGS_PATH);
     let persisted = PersistedSettings::load(settings_path);
 
-    if !settings_path.exists() {
+    if !settings_path.exists() || persisted.music_folder.trim().is_empty() {
         persisted.save(settings_path);
     }
 

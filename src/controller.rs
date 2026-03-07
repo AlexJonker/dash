@@ -20,10 +20,12 @@ pub struct Controller {
 
 impl Controller {
     pub fn new() -> Self {
+        let settings_session = settings::SettingsSession::load();
+
         Self {
             view: AppView::Home,
-            settings_session: settings::SettingsSession::load(),
-            music_session: music::MusicSession::new(),
+            music_session: music::MusicSession::new(&settings_session.music_folder),
+            settings_session,
         }
     }
 
@@ -52,15 +54,22 @@ impl Controller {
                 }
             }
             AppView::Settings => {
+                let old_music_folder = self.settings_session.music_folder.clone();
                 let outcome = settings::show(
                     ctx,
                     palette,
                     &mut self.settings_session.theme_mode,
                     &mut self.settings_session.accent_color,
                     &mut self.settings_session.clock_format,
+                    &mut self.settings_session.music_folder,
                 );
 
                 if outcome.settings_changed {
+                    if self.settings_session.music_folder != old_music_folder {
+                        self.music_session =
+                            music::MusicSession::new(&self.settings_session.music_folder);
+                    }
+
                     self.settings_session.save();
                 }
 

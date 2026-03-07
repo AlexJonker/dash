@@ -15,6 +15,7 @@ pub fn show(
     theme_mode: &mut ThemeMode,
     accent_color: &mut egui::Color32,
     clock_format: &mut ClockFormat,
+    music_folder: &mut String,
 ) -> SettingsOutcome {
     let mut outcome = SettingsOutcome {
         go_home: false,
@@ -93,6 +94,35 @@ pub fn show(
                             outcome.settings_changed = true;
                         }
                     });
+                });
+            });
+
+        ui.add_space(12.0);
+
+        Frame::new()
+            .fill(palette.card)
+            .stroke(Stroke::new(1.0, palette.border))
+            .corner_radius(CornerRadius::same(18))
+            .inner_margin(Margin::symmetric(16, 14))
+            .show(ui, |ui| {
+                ui.vertical(|ui| {
+                    ui.label(
+                        egui::RichText::new("Music folder")
+                            .size(18.0)
+                            .color(palette.foreground),
+                    );
+                    ui.label(
+                        egui::RichText::new("Path to your music directory")
+                            .size(14.0)
+                            .color(palette.muted),
+                    );
+
+                    let response = ui
+                        .add(egui::TextEdit::singleline(music_folder).desired_width(f32::INFINITY));
+
+                    if response.changed() {
+                        outcome.settings_changed = true;
+                    }
                 });
             });
 
