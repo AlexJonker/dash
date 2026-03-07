@@ -176,35 +176,34 @@ pub fn show(
                 ui.add_space(20.0);
 
                 ui.horizontal(|ui| {
-                    let btn_w = 72.0;
-                    let btn_h = 72.0;
-                    let play_w = 88.0;
-                    let gap = 16.0;
-                    let row_w = btn_w * 4.0 + play_w + gap * 4.0;
-                    ui.add_space((total_w - row_w) / 2.0);
+                    let btn_w = 64.0;
+                    let play_w = 80.0;
+                    let gap = 20.0;
+                    // 2 small buttons + 1 play button + 2 gaps between them
+                    let row_w = btn_w * 2.0 + play_w + gap * 2.0;
+                    let padding = ((total_w - row_w) / 2.0).max(0.0);
+                    ui.add_space(padding);
 
-                    icon_btn(
-                        ui,
-                        palette,
-                        control_icon_source(ControlIcon::Shuffle),
-                        btn_w,
-                        btn_h,
-                        false,
-                        || session.shuffle_all(),
-                    );
-                    ui.add_space(gap);
-
+                    // icon_btn(
+                    //     ui,
+                    //     palette,
+                    //     control_icon_source(ControlIcon::Shuffle),
+                    //     btn_w,
+                    //     btn_w,
+                    //     false,
+                    //     || session.shuffle_all(),
+                    // );
+                    // ui.add_space(gap);
                     icon_btn(
                         ui,
                         palette,
                         control_icon_source(ControlIcon::Previous),
                         btn_w,
-                        btn_h,
+                        btn_w,
                         false,
                         || session.previous(),
                     );
                     ui.add_space(gap);
-
                     icon_btn(
                         ui,
                         palette,
@@ -214,18 +213,17 @@ pub fn show(
                             ControlIcon::Play
                         }),
                         play_w,
-                        btn_h,
+                        play_w,
                         true,
                         || session.play_pause_toggle(),
                     );
                     ui.add_space(gap);
-
                     icon_btn(
                         ui,
                         palette,
                         control_icon_source(ControlIcon::Next),
                         btn_w,
-                        btn_h,
+                        btn_w,
                         false,
                         || session.next(),
                     );
