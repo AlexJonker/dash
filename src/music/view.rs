@@ -14,6 +14,7 @@ pub fn show(
     session: &mut MusicSession,
 ) -> Option<MusicAction> {
     session.tick();
+    ctx.request_repaint();
     let mut go_home = false;
 
     egui::CentralPanel::default().show(ctx, |ui| {
