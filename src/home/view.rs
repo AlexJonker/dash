@@ -10,10 +10,6 @@ pub enum HomeAction {
     OpenAndroidAuto,
 }
 
-pub enum AndroidAutoMenuAction {
-    GoHome,
-}
-
 struct AppButton {
     id: &'static str,
     name: &'static str,
@@ -124,12 +120,7 @@ pub fn show(
     }
 }
 
-pub fn show_android_auto_menu(
-    ctx: &egui::Context,
-    palette: Palette,
-) -> Option<AndroidAutoMenuAction> {
-    let mut go_home = false;
-
+pub fn show_android_auto_menu(ctx: &egui::Context, palette: Palette) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.vertical_centered(|ui| {
             ui.add_space(80.0);
@@ -150,25 +141,8 @@ pub fn show_android_auto_menu(
                 )
                 .selectable(false),
             );
-            ui.add_space(28.0);
-
-            let back = ui.add_sized(
-                egui::vec2(160.0, 48.0),
-                egui::Button::new(egui::RichText::new("Back").color(palette.accent_text))
-                    .fill(palette.accent),
-            );
-
-            if back.clicked() {
-                go_home = true;
-            }
         });
     });
-
-    if go_home {
-        Some(AndroidAutoMenuAction::GoHome)
-    } else {
-        None
-    }
 }
 
 fn app_tile(

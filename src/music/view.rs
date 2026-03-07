@@ -1,15 +1,10 @@
 use eframe::egui;
 use egui::{
-    Align, Color32, CornerRadius, Direction, Frame, ImageSource, Pos2, Rect, RichText, Stroke,
-    UiBuilder, Vec2,
+    Align, CornerRadius, Direction, Frame, ImageSource, Pos2, Rect, RichText, UiBuilder, Vec2,
 };
 
 use super::session::MusicSession;
 use crate::theme::Palette;
-
-pub enum MusicAction {
-    GoHome,
-}
 
 #[derive(Clone, Copy)]
 enum ControlIcon {
@@ -30,15 +25,9 @@ fn control_icon_source(icon: ControlIcon) -> ImageSource<'static> {
     }
 }
 
-pub fn show(
-    ctx: &egui::Context,
-    palette: Palette,
-    session: &mut MusicSession,
-) -> Option<MusicAction> {
+pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) {
     session.tick();
     ctx.request_repaint_after(std::time::Duration::from_millis(16));
-
-    let mut go_home = false;
 
     egui::CentralPanel::default()
         .frame(Frame::new().fill(palette.background))
@@ -49,23 +38,7 @@ pub fn show(
             ui.vertical_centered(|ui| {
                 ui.set_max_width(total_w);
 
-                ui.horizontal(|ui| {
-                    if ui
-                        .add_sized(
-                            [80.0, 36.0],
-                            egui::Button::new(
-                                RichText::new("◀  Back").size(18.0).color(palette.muted),
-                            )
-                            .fill(Color32::TRANSPARENT)
-                            .stroke(Stroke::NONE),
-                        )
-                        .clicked()
-                    {
-                        go_home = true;
-                    }
-                });
-
-                ui.add_space(8.0);
+                ui.add_space(28.0);
 
                 let cover = (total_h * 0.38).min(260.0);
                 if let Some(tex) = session.current_cover(ctx) {
@@ -179,7 +152,7 @@ pub fn show(
                     let btn_w = 64.0;
                     let play_w = 80.0;
                     let gap = 20.0;
-                    // 2 small buttons + 1 play button + 2 gaps between them
+
                     let row_w = btn_w * 2.0 + play_w + gap * 2.0;
                     let padding = ((total_w - row_w) / 2.0).max(0.0);
                     ui.add_space(padding);
@@ -230,8 +203,6 @@ pub fn show(
                 });
             });
         });
-
-    go_home.then_some(MusicAction::GoHome)
 }
 
 fn icon_btn(

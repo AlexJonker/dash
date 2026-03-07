@@ -4,7 +4,6 @@ use egui::{Align, CornerRadius, Frame, Layout, Margin, Stroke};
 use crate::theme::{ClockFormat, Palette, ThemeMode};
 
 pub struct SettingsOutcome {
-    pub go_home: bool,
     pub style_changed: bool,
     pub settings_changed: bool,
 }
@@ -18,7 +17,6 @@ pub fn show(
     music_folder: &mut String,
 ) -> SettingsOutcome {
     let mut outcome = SettingsOutcome {
-        go_home: false,
         style_changed: false,
         settings_changed: false,
     };
@@ -213,19 +211,6 @@ pub fn show(
                     });
                 });
             });
-
-        ui.add_space(16.0);
-
-        let back = ui.add(
-            egui::Button::new(egui::RichText::new("Back to home").color(palette.accent_text))
-                .min_size(egui::vec2(160.0, 38.0))
-                .fill(palette.accent)
-                .stroke(Stroke::new(1.0, palette.accent_hover)),
-        );
-
-        if back.clicked() {
-            outcome.go_home = true;
-        }
     });
 
     outcome
