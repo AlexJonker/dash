@@ -117,7 +117,11 @@ impl Controller {
             )
         };
 
+        let bar_height = 56.0;
+        let panel_height = bar_height + 20.0;
+
         egui::TopBottomPanel::top("top_bar")
+            .exact_height(panel_height)
             .frame(
                 Frame::default()
                     .fill(bar_surface)
@@ -125,7 +129,6 @@ impl Controller {
                     .stroke(Stroke::NONE),
             )
             .show(ctx, |ui| {
-                let bar_height = 56.0;
                 let (bar_rect, _) = ui.allocate_exact_size(
                     Vec2::new(ui.available_width(), bar_height),
                     egui::Sense::hover(),

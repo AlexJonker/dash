@@ -20,6 +20,7 @@ enum ControlIcon {
     MusicNote,
     ShuffleEnabled,
     ShuffleDisabled,
+    Volume,
 }
 
 fn icon(icon: ControlIcon) -> ImageSource<'static> {
@@ -30,7 +31,8 @@ fn icon(icon: ControlIcon) -> ImageSource<'static> {
         ControlIcon::Next => egui::include_image!("../../assets/icons/next.svg"),
         ControlIcon::MusicNote => egui::include_image!("../../assets/icons/music.svg"),
         ControlIcon::ShuffleEnabled => egui::include_image!("../../assets/icons/shuffle_enabled.svg"),
-        ControlIcon::ShuffleDisabled => egui::include_image!("../../assets/icons/shuffle_disabled.svg")
+        ControlIcon::ShuffleDisabled => egui::include_image!("../../assets/icons/shuffle_disabled.svg"),
+        ControlIcon::Volume => egui::include_image!("../../assets/icons/volume.svg"),
     }
 }
 
@@ -56,6 +58,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
         .show(ctx, |ui| {
             let size = ui.available_size();
             let cx = size.x / 2.0;
+            let origin = ui.max_rect().min.to_vec2();
 
             // Sizes
             let cover = (size.y * 0.38).min(260.0);
@@ -78,20 +81,26 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
 
             // Rects
             let cover_rect =
-                Rect::from_center_size(Pos2::new(cx, cover_top + cover / 2.0), Vec2::splat(cover));
+                Rect::from_center_size(Pos2::new(cx, cover_top + cover / 2.0), Vec2::splat(cover))
+                    .translate(origin);
 
             let title_rect =
-                Rect::from_center_size(Pos2::new(cx, meta_top + 18.0), Vec2::new(440.0, 36.0));
+                Rect::from_center_size(Pos2::new(cx, meta_top + 18.0), Vec2::new(440.0, 36.0))
+                    .translate(origin);
             let artist_rect =
-                Rect::from_center_size(Pos2::new(cx, meta_top + 52.0), Vec2::new(440.0, 28.0));
+                Rect::from_center_size(Pos2::new(cx, meta_top + 52.0), Vec2::new(440.0, 28.0))
+                    .translate(origin);
             let album_rect =
-                Rect::from_center_size(Pos2::new(cx, meta_top + 78.0), Vec2::new(440.0, 22.0));
+                Rect::from_center_size(Pos2::new(cx, meta_top + 78.0), Vec2::new(440.0, 22.0))
+                    .translate(origin);
 
             let bar_w = (size.x - 60.0).min(520.0);
             let seek_rect =
-                Rect::from_center_size(Pos2::new(cx, seek_top + 22.0), Vec2::new(bar_w, 44.0));
+                Rect::from_center_size(Pos2::new(cx, seek_top + 22.0), Vec2::new(bar_w, 44.0))
+                    .translate(origin);
             let time_rect =
-                Rect::from_center_size(Pos2::new(cx, seek_top + 54.0), Vec2::new(bar_w, 20.0));
+                Rect::from_center_size(Pos2::new(cx, seek_top + 54.0), Vec2::new(bar_w, 20.0))
+                    .translate(origin);
 
             let row_w = btn * 2.0 + play + 40.0;
             let ctrl_left = cx - row_w / 2.0;
@@ -99,22 +108,26 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
             let prev_rect = Rect::from_min_size(
                 Pos2::new(ctrl_left, ctrl_top + (play - btn) / 2.0),
                 Vec2::splat(btn),
-            );
+            )
+            .translate(origin);
             let play_rect = Rect::from_min_size(
                 Pos2::new(ctrl_left + btn + 20.0, ctrl_top),
                 Vec2::splat(play),
-            );
+            )
+            .translate(origin);
             let next_rect = Rect::from_min_size(
                 Pos2::new(
                     ctrl_left + btn + 20.0 + play + 20.0,
                     ctrl_top + (play - btn) / 2.0,
                 ),
                 Vec2::splat(btn),
-            );
+            )
+            .translate(origin);
             let shuffle_rect = Rect::from_center_size(
                 Pos2::new(cx, ctrl_top + play + shuffle_gap + btn / 2.0),
                 Vec2::splat(btn),
-            );
+            )
+            .translate(origin);
 
             // Album cover
             let mut cover_ui = centered_child(ui, cover_rect);
@@ -174,19 +187,18 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 }
 
                 let painter = ui.painter();
-                let track = Rect::from_center_size(seek_rect.center(), Vec2::new(bar_w, 8.0));
+                const PROGRESS_BAR_HEIGHT: f32 = 20.0;
+                let track = Rect::from_center_size(
+                    seek_rect.center(),
+                    Vec2::new(bar_w, PROGRESS_BAR_HEIGHT),
+                );
 
                 painter.rect_filled(track, 4.0, palette.card_hover);
 
                 let fill = (pos / total * bar_w).clamp(0.0, bar_w);
                 painter.rect_filled(
-                    Rect::from_min_size(track.min, Vec2::new(fill, 8.0)),
+                    Rect::from_min_size(track.min, Vec2::new(fill, PROGRESS_BAR_HEIGHT)),
                     4.0,
-                    palette.accent,
-                );
-                painter.circle_filled(
-                    Pos2::new(track.left() + fill, track.center().y),
-                    10.0,
                     palette.accent,
                 );
 
@@ -264,10 +276,29 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
             }
 
             // Volume slider
+            const VOLUME_SLIDER_WIDTH: f32 = 25.0;
             let volume = session.get_volume();
-            let bar_h = (size.y * 0.28).clamp(120.0, 220.0);
-            let bar_rect =
-                Rect::from_center_size(Pos2::new(32.0, size.y / 2.0), Vec2::new(10.0, bar_h));
+            let vol_icon_size = 20.0;
+            let vol_icon_gap = 6.0;
+            let vol_padding = 24.0;
+            let bar_h = size.y - vol_padding * 2.0 - vol_icon_size - vol_icon_gap;
+            let bar_rect = Rect::from_min_size(
+                Pos2::new(27.0, vol_padding + vol_icon_size + vol_icon_gap),
+                Vec2::new(VOLUME_SLIDER_WIDTH, bar_h),
+            )
+            .translate(origin);
+
+            // Speaker icon centered above the bar
+            let icon_rect = Rect::from_center_size(
+                Pos2::new(bar_rect.center().x, vol_padding + vol_icon_size / 2.0),
+                Vec2::splat(vol_icon_size),
+            )
+            .translate(origin);
+            centered_child(ui, icon_rect).add(
+                egui::Image::new(icon(ControlIcon::Volume))
+                    .fit_to_exact_size(Vec2::splat(vol_icon_size))
+                    .tint(palette.muted),
+            );
 
             let resp = ui.allocate_rect(bar_rect.expand(10.0), egui::Sense::click_and_drag());
 
@@ -293,21 +324,6 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 4.0,
                 palette.accent,
             );
-
-            painter.circle_filled(
-                Pos2::new(bar_rect.center().x, bar_rect.bottom() - fill),
-                10.0,
-                palette.accent,
-            );
-
-            // Volume percentage text
-            let vol_pct = format!("{}%", (volume * 100.0).round() as u32);
-            let label_rect = Rect::from_center_size(
-                Pos2::new(bar_rect.center().x, bar_rect.bottom() + 16.0),
-                Vec2::new(40.0, 16.0),
-            );
-            centered_child(ui, label_rect)
-                .label(RichText::new(vol_pct).size(11.0).color(palette.muted));
         });
 
     changes
