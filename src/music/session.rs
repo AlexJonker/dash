@@ -7,6 +7,7 @@ use eframe::egui;
 use lofty::file::AudioFile;
 use lofty::file::TaggedFileExt;
 use lofty::probe::Probe;
+use rand::seq::SliceRandom;
 use rodio::{Decoder, DeviceSinkBuilder, MixerDeviceSink, Player};
 
 #[derive(Clone)]
@@ -28,6 +29,7 @@ pub struct MusicSession {
     last_error: Option<String>,
     cover_cache: HashMap<usize, Option<egui::TextureHandle>>,
     volume: f32,
+    shuffle: bool,
 }
 
 impl MusicSession {
@@ -43,6 +45,7 @@ impl MusicSession {
             Err(err) => (None, None, Some(format!("Audio output unavailable: {err}"))),
         };
 
+        // The default options when starting the music player.
         let mut session: MusicSession = Self {
             tracks,
             queue: Vec::new(),
@@ -53,6 +56,7 @@ impl MusicSession {
             last_error: error,
             cover_cache: HashMap::new(),
             volume: volume.clamp(0.0, 1.0),
+            shuffle: false,
         };
 
         session.apply_volume();
@@ -106,6 +110,25 @@ impl MusicSession {
     pub fn set_volume(&mut self, volume: f32) {
         self.volume = volume.clamp(0.0, 1.0);
         self.apply_volume();
+    }
+
+    pub fn is_shuffle_enabled(&self) -> bool {
+        self.shuffle
+    }
+
+    pub fn shuffle_toggle(&mut self) {
+        self.shuffle = !self.shuffle;
+
+        if self.tracks.is_empty() {
+            return;
+        }
+
+        let current = self.current_track_index();
+        if self.queue.is_empty() {
+            self.queue = (0..self.tracks.len()).collect();
+        }
+
+        self.rebuild_queue(current);
     }
 
     pub fn seek_to_secs(&mut self, secs: f32) {
@@ -191,11 +214,41 @@ impl MusicSession {
 
     fn ensure_queue_initialized(&mut self) -> bool {
         if self.queue.is_empty() && !self.tracks.is_empty() {
-            self.queue = (0..self.tracks.len()).collect();
-            self.queue_pos = 0;
+            self.rebuild_queue(None);
         }
 
         !self.queue.is_empty()
+    }
+
+    fn rebuild_queue(&mut self, current_first: Option<usize>) {
+        if self.tracks.is_empty() {
+            self.queue.clear();
+            self.queue_pos = 0;
+            return;
+        }
+
+        self.queue = (0..self.tracks.len()).collect();
+
+        if self.shuffle {
+            let mut rng = rand::rng();
+            self.queue.shuffle(&mut rng);
+
+            if let Some(current) = current_first {
+                if let Some(pos) = self.queue.iter().position(|&idx| idx == current) {
+                    self.queue.swap(0, pos);
+                }
+            }
+
+            self.queue_pos = 0;
+        } else if let Some(current) = current_first {
+            self.queue_pos = self
+                .queue
+                .iter()
+                .position(|&idx| idx == current)
+                .unwrap_or(0);
+        } else {
+            self.queue_pos = 0;
+        }
     }
 
     fn play_current(&mut self) {

@@ -665,6 +665,7 @@ dependencies = [
  "image",
  "lofty",
  "mimalloc",
+ "rand 0.10.0",
  "rodio",
  "serde",
  "serde_json",

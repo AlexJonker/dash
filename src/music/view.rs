@@ -13,6 +13,7 @@ enum ControlIcon {
     Pause,
     Next,
     MusicNote,
+    Shuffle,
 }
 
 fn icon(icon: ControlIcon) -> ImageSource<'static> {
@@ -22,6 +23,7 @@ fn icon(icon: ControlIcon) -> ImageSource<'static> {
         ControlIcon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
         ControlIcon::Next => egui::include_image!("../../assets/icons/next.svg"),
         ControlIcon::MusicNote => egui::include_image!("../../assets/icons/music.svg"),
+        ControlIcon::Shuffle => egui::include_image!("../../assets/icons/shuffle.svg"),
     }
 }
 
@@ -51,10 +53,12 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
             let btn = 100.0;
 
             let gaps = (16.0, 14.0, 16.0);
+            let shuffle_gap = 16.0;
             let meta_h = 96.0;
             let seek_h = 64.0;
 
-            let block_h = cover + gaps.0 + meta_h + gaps.1 + seek_h + gaps.2 + play;
+            let block_h =
+                cover + gaps.0 + meta_h + gaps.1 + seek_h + gaps.2 + play + shuffle_gap + btn;
             let cover_top = ((size.y - block_h) / 2.0).max(8.0);
 
             // Y Positions
@@ -95,6 +99,10 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                     ctrl_left + btn + 20.0 + play + 20.0,
                     ctrl_top + (play - btn) / 2.0,
                 ),
+                Vec2::splat(btn),
+            );
+            let shuffle_rect = Rect::from_center_size(
+                Pos2::new(cx, ctrl_top + play + shuffle_gap + btn / 2.0),
                 Vec2::splat(btn),
             );
 
@@ -222,6 +230,15 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 next_rect,
                 false,
                 || session.next(),
+            );
+
+            icon_btn_abs(
+                ui,
+                palette,
+                icon(ControlIcon::Shuffle),
+                shuffle_rect,
+                session.is_shuffle_enabled(),
+                || session.shuffle_toggle(),
             );
 
             // Volume slider
