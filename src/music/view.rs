@@ -267,29 +267,21 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
 
             // Volume slider
             const VOLUME_SLIDER_WIDTH: f32 = 25.0;
+
             let volume = session.get_volume();
-            let vol_icon_size = 20.0;
-            let vol_icon_gap = 6.0;
+
+            let vol_icon_size = 22.0;
             let vol_padding = 24.0;
-            let bar_h = size.y - vol_padding * 2.0 - vol_icon_size - vol_icon_gap;
+
+            let bar_h = size.y - vol_padding * 2.0;
+
             let bar_rect = Rect::from_min_size(
-                Pos2::new(27.0, vol_padding + vol_icon_size + vol_icon_gap),
+                Pos2::new(27.0, vol_padding),
                 Vec2::new(VOLUME_SLIDER_WIDTH, bar_h),
             )
             .translate(origin);
 
-            // Speaker icon centered above the bar
-            let icon_rect = Rect::from_center_size(
-                Pos2::new(bar_rect.center().x, vol_padding + vol_icon_size / 2.0),
-                Vec2::splat(vol_icon_size),
-            )
-            .translate(origin);
-            centered_child(ui, icon_rect).add(
-                egui::Image::new(icon(Icon::Volume))
-                    .fit_to_exact_size(Vec2::splat(vol_icon_size))
-                    .tint(palette.muted),
-            );
-
+            // Volume bar interaction
             let resp = ui.allocate_rect(bar_rect.expand(10.0), egui::Sense::click_and_drag());
 
             if resp.clicked() || resp.dragged() {
@@ -297,15 +289,21 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                     .interact_pointer_pos()
                     .map(|p| p.y)
                     .unwrap_or(bar_rect.bottom());
+
                 let t = 1.0 - ((y - bar_rect.top()) / bar_rect.height()).clamp(0.0, 1.0);
+
                 session.set_volume(t);
                 changes.volume_changed = Some(session.get_volume());
             }
 
             let painter = ui.painter();
+
+            // Volume bar background
             painter.rect_filled(bar_rect, 4.0, palette.card_hover);
 
+            // Volume bar fill
             let fill = (volume * bar_h).clamp(0.0, bar_h);
+
             painter.rect_filled(
                 Rect::from_min_size(
                     Pos2::new(bar_rect.left(), bar_rect.bottom() - fill),
@@ -313,6 +311,24 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 ),
                 4.0,
                 palette.accent,
+            );
+
+            // Volume icon in volume bar
+            const VOLUME_ICON_OFFSET: f32 = 12.0;
+
+            let icon_y = (bar_rect.bottom() - fill + VOLUME_ICON_OFFSET).clamp(
+                bar_rect.top() + vol_icon_size / 2.0,
+                bar_rect.bottom() - vol_icon_size / 2.0,
+            );
+
+            let icon_rect = Rect::from_center_size(
+                Pos2::new(bar_rect.center().x, icon_y),
+                Vec2::splat(vol_icon_size),
+            );
+
+            ui.put(
+                icon_rect,
+                egui::Image::new(icon(Icon::Volume)).fit_to_exact_size(Vec2::splat(vol_icon_size)),
             );
         });
 
