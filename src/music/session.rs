@@ -49,7 +49,7 @@ impl MusicSession {
             queue_pos: 0,
             device_sink,
             player,
-            paused: false,
+            paused: true,
             last_error: error,
             cover_cache: HashMap::new(),
             volume: volume.clamp(0.0, 1.0),
