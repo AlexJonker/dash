@@ -12,7 +12,7 @@ pub struct MusicChanges {
 }
 
 #[derive(Clone, Copy)]
-enum ControlIcon {
+enum Icon {
     Previous,
     Play,
     Pause,
@@ -23,16 +23,16 @@ enum ControlIcon {
     Volume,
 }
 
-fn icon(icon: ControlIcon) -> ImageSource<'static> {
+fn icon(icon: Icon) -> ImageSource<'static> {
     match icon {
-        ControlIcon::Previous => egui::include_image!("../../assets/icons/previous.svg"),
-        ControlIcon::Play => egui::include_image!("../../assets/icons/play.svg"),
-        ControlIcon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
-        ControlIcon::Next => egui::include_image!("../../assets/icons/next.svg"),
-        ControlIcon::MusicNote => egui::include_image!("../../assets/icons/music.svg"),
-        ControlIcon::ShuffleEnabled => egui::include_image!("../../assets/icons/shuffle_enabled.svg"),
-        ControlIcon::ShuffleDisabled => egui::include_image!("../../assets/icons/shuffle_disabled.svg"),
-        ControlIcon::Volume => egui::include_image!("../../assets/icons/volume.svg"),
+        Icon::Previous => egui::include_image!("../../assets/icons/previous.svg"),
+        Icon::Play => egui::include_image!("../../assets/icons/play.svg"),
+        Icon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
+        Icon::Next => egui::include_image!("../../assets/icons/next.svg"),
+        Icon::MusicNote => egui::include_image!("../../assets/icons/music.svg"),
+        Icon::ShuffleEnabled => egui::include_image!("../../assets/icons/shuffle_enabled.svg"),
+        Icon::ShuffleDisabled => egui::include_image!("../../assets/icons/shuffle_disabled.svg"),
+        Icon::Volume => egui::include_image!("../../assets/icons/volume.svg"),
     }
 }
 
@@ -142,7 +142,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                     .painter()
                     .rect_filled(cover_rect, 16.0, palette.card);
                 centered_child(ui, cover_rect).add(
-                    egui::Image::new(icon(ControlIcon::MusicNote))
+                    egui::Image::new(icon(Icon::MusicNote))
                         .fit_to_exact_size(Vec2::splat(72.0))
                         .tint(palette.muted),
                 );
@@ -223,36 +223,26 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
             }
 
             // Play buttons
-            icon_btn_abs(
-                ui,
-                palette,
-                icon(ControlIcon::Previous),
-                prev_rect,
-                false,
-                || session.previous(),
-            );
+            icon_btn_abs(ui, palette, icon(Icon::Previous), prev_rect, false, || {
+                session.previous()
+            });
 
             icon_btn_abs(
                 ui,
                 palette,
                 icon(if session.is_playing() {
-                    ControlIcon::Pause
+                    Icon::Pause
                 } else {
-                    ControlIcon::Play
+                    Icon::Play
                 }),
                 play_rect,
                 true,
                 || session.play_pause_toggle(),
             );
 
-            icon_btn_abs(
-                ui,
-                palette,
-                icon(ControlIcon::Next),
-                next_rect,
-                false,
-                || session.next(),
-            );
+            icon_btn_abs(ui, palette, icon(Icon::Next), next_rect, false, || {
+                session.next()
+            });
 
             let was_shuffle = session.is_shuffle_enabled();
 
@@ -260,9 +250,9 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 ui,
                 palette,
                 icon(if session.is_shuffle_enabled() {
-                    ControlIcon::ShuffleEnabled
+                    Icon::ShuffleEnabled
                 } else {
-                    ControlIcon::ShuffleDisabled
+                    Icon::ShuffleDisabled
                 }),
                 shuffle_rect,
                 session.is_shuffle_enabled(),
@@ -295,7 +285,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
             )
             .translate(origin);
             centered_child(ui, icon_rect).add(
-                egui::Image::new(icon(ControlIcon::Volume))
+                egui::Image::new(icon(Icon::Volume))
                     .fit_to_exact_size(Vec2::splat(vol_icon_size))
                     .tint(palette.muted),
             );
