@@ -149,7 +149,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                     .label(RichText::new(&track.album).size(16.0).color(palette.muted));
             } else {
                 centered_child(ui, title_rect).label(
-                    RichText::new("Press Play to start")
+                    RichText::new("No music found")
                         .size(24.0)
                         .color(palette.muted),
                 );
