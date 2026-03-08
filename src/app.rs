@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use eframe::egui;
+use egui::{FontData, FontDefinitions, FontFamily};
 
 use crate::controller::Controller;
 use crate::theme::apply_style;
@@ -23,6 +24,24 @@ pub fn run() -> Result<(), eframe::Error> {
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
             cc.egui_ctx.set_pixels_per_point(1.0);
+
+            // Support Chinese, Japanese and Korean characters (for music)
+            let mut fonts = FontDefinitions::default();
+
+            fonts.font_data.insert(
+                "noto_cjk".to_owned(),
+                FontData::from_static(include_bytes!("../assets/fonts/NotoSansCJK-Regular.ttc"))
+                    .into(),
+            );
+
+            fonts
+                .families
+                .get_mut(&FontFamily::Proportional)
+                .unwrap()
+                .insert(0, "noto_cjk".to_owned());
+
+            cc.egui_ctx.set_fonts(fonts);
+
             Ok(Box::<DashApp>::default())
         }),
     )
