@@ -29,6 +29,7 @@ impl Controller {
             music_session: music::MusicSession::new(
                 &settings_session.music_folder,
                 settings_session.music_volume,
+                settings_session.music_shuffle,
             ),
             settings_session,
         }
@@ -54,8 +55,18 @@ impl Controller {
                 }
             }
             AppView::Music => {
-                if let Some(new_volume) = music::show(ctx, palette, &mut self.music_session) {
+                let changes: music::MusicChanges =
+                    music::show(ctx, palette, &mut self.music_session);
+
+                if let Some(new_volume) = changes.volume_changed {
                     self.settings_session.music_volume = new_volume;
+                }
+
+                if let Some(shuffle) = changes.shuffle_changed {
+                    self.settings_session.music_shuffle = shuffle;
+                }
+
+                if changes.volume_changed.is_some() || changes.shuffle_changed.is_some() {
                     self.settings_session.save();
                 }
             }
@@ -75,6 +86,7 @@ impl Controller {
                         self.music_session = music::MusicSession::new(
                             &self.settings_session.music_folder,
                             self.settings_session.music_volume,
+                            self.settings_session.music_shuffle,
                         );
                     }
 

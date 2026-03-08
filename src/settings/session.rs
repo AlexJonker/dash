@@ -10,6 +10,7 @@ pub struct SettingsSession {
     pub clock_format: ClockFormat,
     pub music_folder: String,
     pub music_volume: f32,
+    pub music_shuffle: bool,
 }
 
 impl SettingsSession {
@@ -22,6 +23,7 @@ impl SettingsSession {
             clock_format: state.clock_format,
             music_folder: state.music_folder,
             music_volume: state.music_volume,
+            music_shuffle: state.music_shuffle,
         }
     }
 
@@ -36,6 +38,7 @@ impl SettingsSession {
             clock_format: self.clock_format,
             music_folder: self.music_folder.clone(),
             music_volume: self.music_volume,
+            music_shuffle: self.music_shuffle,
         });
     }
 }

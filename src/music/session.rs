@@ -33,7 +33,7 @@ pub struct MusicSession {
 }
 
 impl MusicSession {
-    pub fn new(music_folder: &str, volume: f32) -> Self {
+    pub fn new(music_folder: &str, volume: f32, shuffle: bool) -> Self {
         let folder = PathBuf::from(music_folder);
 
         let tracks = scan_music_library(&folder);
@@ -45,7 +45,6 @@ impl MusicSession {
             Err(err) => (None, None, Some(format!("Audio output unavailable: {err}"))),
         };
 
-        // The default options when starting the music player.
         let mut session: MusicSession = Self {
             tracks,
             queue: Vec::new(),
@@ -56,10 +55,11 @@ impl MusicSession {
             last_error: error,
             cover_cache: HashMap::new(),
             volume: volume.clamp(0.0, 1.0),
-            shuffle: false,
+            shuffle,
         };
 
         session.apply_volume();
+        session.ensure_queue_initialized();
         session
     }
 

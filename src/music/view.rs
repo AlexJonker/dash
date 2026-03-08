@@ -6,6 +6,11 @@ use egui::{
 use super::session::MusicSession;
 use crate::theme::Palette;
 
+pub struct MusicChanges {
+    pub volume_changed: Option<f32>,
+    pub shuffle_changed: Option<bool>,
+}
+
 #[derive(Clone, Copy)]
 enum ControlIcon {
     Previous,
@@ -35,11 +40,14 @@ fn centered_child(ui: &mut egui::Ui, rect: Rect) -> egui::Ui {
     )
 }
 
-pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -> Option<f32> {
+pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -> MusicChanges {
     session.tick();
     ctx.request_repaint_after(std::time::Duration::from_millis(16));
 
-    let mut volume_changed = None;
+    let mut changes = MusicChanges {
+        volume_changed: None,
+        shuffle_changed: None,
+    };
 
     egui::CentralPanel::default()
         .frame(Frame::new().fill(palette.background))
@@ -232,14 +240,22 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 || session.next(),
             );
 
+            let was_shuffle = session.is_shuffle_enabled();
+
             icon_btn_abs(
                 ui,
                 palette,
                 icon(ControlIcon::Shuffle),
                 shuffle_rect,
                 session.is_shuffle_enabled(),
-                || session.shuffle_toggle(),
+                || {
+                    session.shuffle_toggle();
+                },
             );
+
+            if session.is_shuffle_enabled() != was_shuffle {
+                changes.shuffle_changed = Some(session.is_shuffle_enabled());
+            }
 
             // Volume slider
             let volume = session.get_volume();
@@ -256,7 +272,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                     .unwrap_or(bar_rect.bottom());
                 let t = 1.0 - ((y - bar_rect.top()) / bar_rect.height()).clamp(0.0, 1.0);
                 session.set_volume(t);
-                volume_changed = Some(session.get_volume());
+                changes.volume_changed = Some(session.get_volume());
             }
 
             let painter = ui.painter();
@@ -288,7 +304,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 .label(RichText::new(vol_pct).size(11.0).color(palette.muted));
         });
 
-    volume_changed
+    changes
 }
 
 fn icon_btn_abs(
