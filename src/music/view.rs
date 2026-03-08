@@ -18,7 +18,8 @@ enum ControlIcon {
     Pause,
     Next,
     MusicNote,
-    Shuffle,
+    ShuffleEnabled,
+    ShuffleDisabled,
 }
 
 fn icon(icon: ControlIcon) -> ImageSource<'static> {
@@ -28,7 +29,8 @@ fn icon(icon: ControlIcon) -> ImageSource<'static> {
         ControlIcon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
         ControlIcon::Next => egui::include_image!("../../assets/icons/next.svg"),
         ControlIcon::MusicNote => egui::include_image!("../../assets/icons/music.svg"),
-        ControlIcon::Shuffle => egui::include_image!("../../assets/icons/shuffle.svg"),
+        ControlIcon::ShuffleEnabled => egui::include_image!("../../assets/icons/shuffle_enabled.svg"),
+        ControlIcon::ShuffleDisabled => egui::include_image!("../../assets/icons/shuffle_disabled.svg")
     }
 }
 
@@ -245,7 +247,11 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
             icon_btn_abs(
                 ui,
                 palette,
-                icon(ControlIcon::Shuffle),
+                icon(if session.is_shuffle_enabled() {
+                    ControlIcon::ShuffleEnabled
+                } else {
+                    ControlIcon::ShuffleDisabled
+                }),
                 shuffle_rect,
                 session.is_shuffle_enabled(),
                 || {
