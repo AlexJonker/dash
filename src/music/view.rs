@@ -12,6 +12,7 @@ enum ControlIcon {
     Play,
     Pause,
     Next,
+    MusicNote,
 }
 
 fn icon(icon: ControlIcon) -> ImageSource<'static> {
@@ -20,6 +21,7 @@ fn icon(icon: ControlIcon) -> ImageSource<'static> {
         ControlIcon::Play => egui::include_image!("../../assets/icons/play.svg"),
         ControlIcon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
         ControlIcon::Next => egui::include_image!("../../assets/icons/next.svg"),
+        ControlIcon::MusicNote => egui::include_image!("../../assets/icons/music.svg"),
     }
 }
 
@@ -108,12 +110,10 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 cover_ui
                     .painter()
                     .rect_filled(cover_rect, 16.0, palette.card);
-                cover_ui.painter().text(
-                    cover_rect.center(),
-                    egui::Align2::CENTER_CENTER,
-                    "♪",
-                    egui::FontId::proportional(64.0),
-                    palette.muted,
+                centered_child(ui, cover_rect).add(
+                    egui::Image::new(icon(ControlIcon::MusicNote))
+                        .fit_to_exact_size(Vec2::splat(72.0))
+                        .tint(palette.muted),
                 );
             }
 
