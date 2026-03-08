@@ -15,6 +15,8 @@ struct PersistedSettings {
     clock_type: u8,
     #[serde(default)]
     music_folder: String,
+    #[serde(default)]
+    music_volume: f32,
 }
 
 // Default settings
@@ -25,6 +27,7 @@ impl Default for PersistedSettings {
             accent_color: [94, 129, 255, 255],
             clock_type: 24,
             music_folder: "/storage/music".to_string(),
+            music_volume: 0.8,
         }
     }
 }
@@ -35,6 +38,7 @@ pub struct SettingsState {
     pub accent_color: Color32,
     pub clock_format: ClockFormat,
     pub music_folder: String,
+    pub music_volume: f32,
 }
 
 impl PersistedSettings {
@@ -72,6 +76,7 @@ impl PersistedSettings {
             accent_color: Color32::from_rgba_premultiplied(r, g, b, a),
             clock_format: ClockFormat::from_u8(self.clock_type),
             music_folder: self.music_folder.clone(),
+            music_volume: self.music_volume.clamp(0.0, 1.0),
         }
     }
 
@@ -86,6 +91,7 @@ impl PersistedSettings {
             ],
             clock_type: state.clock_format.as_u8(),
             music_folder: state.music_folder,
+            music_volume: state.music_volume.clamp(0.0, 1.0),
         }
     }
 }

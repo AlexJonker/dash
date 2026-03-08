@@ -26,7 +26,10 @@ impl Controller {
 
         Self {
             view: AppView::Home,
-            music_session: music::MusicSession::new(&settings_session.music_folder),
+            music_session: music::MusicSession::new(
+                &settings_session.music_folder,
+                settings_session.music_volume,
+            ),
             settings_session,
         }
     }
@@ -51,7 +54,10 @@ impl Controller {
                 }
             }
             AppView::Music => {
-                music::show(ctx, palette, &mut self.music_session);
+                if let Some(new_volume) = music::show(ctx, palette, &mut self.music_session) {
+                    self.settings_session.music_volume = new_volume;
+                    self.settings_session.save();
+                }
             }
             AppView::Settings => {
                 let old_music_folder = self.settings_session.music_folder.clone();
@@ -66,8 +72,10 @@ impl Controller {
 
                 if outcome.settings_changed {
                     if self.settings_session.music_folder != old_music_folder {
-                        self.music_session =
-                            music::MusicSession::new(&self.settings_session.music_folder);
+                        self.music_session = music::MusicSession::new(
+                            &self.settings_session.music_folder,
+                            self.settings_session.music_volume,
+                        );
                     }
 
                     self.settings_session.save();

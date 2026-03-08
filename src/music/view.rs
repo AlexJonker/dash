@@ -23,9 +23,11 @@ fn control_icon_source(icon: ControlIcon) -> ImageSource<'static> {
     }
 }
 
-pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) {
+pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -> Option<f32> {
     session.tick();
     ctx.request_repaint_after(std::time::Duration::from_millis(16));
+
+    let mut volume_changed = None;
 
     egui::CentralPanel::default()
         .frame(Frame::new().fill(palette.background))
@@ -76,6 +78,77 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) {
                     ui.label(
                         RichText::new("Press Play to start")
                             .size(24.0)
+                            .color(palette.muted),
+                    );
+                }
+
+                ui.add_space(12.0);
+
+                {
+                    let volume = session.get_volume();
+                    let bar_h = (total_h * 0.28).clamp(120.0, 220.0);
+                    let bar_w = 10.0;
+                    let handle_r = 10.0;
+                    let widget_w = bar_w + 20.0;
+                    let widget_h = bar_h + 20.0;
+
+                    let right_margin = 24.0;
+                    let top_offset = total_h * 0.18;
+                    let overlay_rect = Rect::from_min_size(
+                        Pos2::new(right_margin, top_offset),
+                        Vec2::new(widget_w, widget_h + 24.0),
+                    );
+
+                    let mut overlay_ui = ui.new_child(
+                        UiBuilder::new()
+                            .max_rect(overlay_rect)
+                            .layout(egui::Layout::top_down(Align::Center)),
+                    );
+
+                    let bar_rect = Rect::from_min_size(
+                        Pos2::new(
+                            overlay_rect.center().x - bar_w / 2.0,
+                            overlay_rect.top() + 6.0,
+                        ),
+                        Vec2::new(bar_w, bar_h),
+                    );
+
+                    let (_, resp) = overlay_ui.allocate_exact_size(
+                        Vec2::new(widget_w, widget_h),
+                        egui::Sense::click_and_drag(),
+                    );
+
+                    if resp.clicked() || resp.dragged() {
+                        let y = resp
+                            .interact_pointer_pos()
+                            .map(|p| p.y)
+                            .unwrap_or(bar_rect.bottom());
+                        let t = 1.0 - ((y - bar_rect.top()) / bar_rect.height()).clamp(0.0, 1.0);
+                        session.set_volume(t);
+                        volume_changed = Some(session.get_volume());
+                    }
+
+                    let painter = overlay_ui.painter();
+                    painter.rect_filled(bar_rect, CornerRadius::same(4), palette.card_hover);
+
+                    let fill_h = (volume * bar_h).clamp(0.0, bar_h);
+                    if fill_h > 0.0 {
+                        let fill_rect = Rect::from_min_size(
+                            Pos2::new(bar_rect.left(), bar_rect.bottom() - fill_h),
+                            Vec2::new(bar_w, fill_h),
+                        );
+                        painter.rect_filled(fill_rect, CornerRadius::same(4), palette.accent);
+                    }
+
+                    painter.circle_filled(
+                        Pos2::new(bar_rect.center().x, bar_rect.bottom() - fill_h),
+                        handle_r,
+                        palette.accent,
+                    );
+
+                    overlay_ui.label(
+                        RichText::new(format!("{:.0}%", volume * 100.0))
+                            .size(15.0)
                             .color(palette.muted),
                     );
                 }
@@ -191,6 +264,8 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) {
                 });
             });
         });
+
+    volume_changed
 }
 
 fn icon_btn(

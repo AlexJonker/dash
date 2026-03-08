@@ -9,6 +9,7 @@ pub struct SettingsSession {
     pub accent_color: Color32,
     pub clock_format: ClockFormat,
     pub music_folder: String,
+    pub music_volume: f32,
 }
 
 impl SettingsSession {
@@ -20,6 +21,7 @@ impl SettingsSession {
             accent_color: state.accent_color,
             clock_format: state.clock_format,
             music_folder: state.music_folder,
+            music_volume: state.music_volume,
         }
     }
 
@@ -33,6 +35,7 @@ impl SettingsSession {
             accent_color: self.accent_color,
             clock_format: self.clock_format,
             music_folder: self.music_folder.clone(),
+            music_volume: self.music_volume,
         });
     }
 }

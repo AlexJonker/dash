@@ -27,10 +27,11 @@ pub struct MusicSession {
     paused: bool,
     last_error: Option<String>,
     cover_cache: HashMap<usize, Option<egui::TextureHandle>>,
+    volume: f32,
 }
 
 impl MusicSession {
-    pub fn new(music_folder: &str) -> Self {
+    pub fn new(music_folder: &str, volume: f32) -> Self {
         let folder = PathBuf::from(music_folder);
 
         let tracks = scan_music_library(&folder);
@@ -42,7 +43,7 @@ impl MusicSession {
             Err(err) => (None, None, Some(format!("Audio output unavailable: {err}"))),
         };
 
-        Self {
+        let mut session: MusicSession = Self {
             tracks,
             queue: Vec::new(),
             queue_pos: 0,
@@ -51,7 +52,11 @@ impl MusicSession {
             paused: false,
             last_error: error,
             cover_cache: HashMap::new(),
-        }
+            volume: volume.clamp(0.0, 1.0),
+        };
+
+        session.apply_volume();
+        session
     }
 
     pub fn current_track(&self) -> Option<&Track> {
@@ -92,6 +97,15 @@ impl MusicSession {
     pub fn current_duration_secs(&self) -> Option<f32> {
         let secs = self.current_track()?.duration.as_secs_f32();
         if secs > 0.0 { Some(secs) } else { None }
+    }
+
+    pub fn get_volume(&self) -> f32 {
+        self.volume
+    }
+
+    pub fn set_volume(&mut self, volume: f32) {
+        self.volume = volume.clamp(0.0, 1.0);
+        self.apply_volume();
     }
 
     pub fn seek_to_secs(&mut self, secs: f32) {
@@ -214,13 +228,19 @@ impl MusicSession {
 
         player.clear();
         player.append(decoder);
+        player.set_volume(self.volume);
         player.play();
 
         self.paused = false;
         self.last_error = None;
 
-        // Keep the device sink alive for playback lifetime.
         let _ = self.device_sink.as_ref();
+    }
+
+    fn apply_volume(&mut self) {
+        if let Some(player) = &self.player {
+            player.set_volume(self.volume);
+        }
     }
 }
 
