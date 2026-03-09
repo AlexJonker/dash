@@ -3,7 +3,7 @@ use egui::{
     Align, CornerRadius, Direction, Frame, ImageSource, Pos2, Rect, RichText, UiBuilder, Vec2,
 };
 
-use super::session::MusicSession;
+use super::super::session::MusicSession;
 use crate::theme::Palette;
 
 pub struct MusicChanges {
@@ -28,16 +28,16 @@ enum Icon {
 
 fn icon(icon: Icon) -> ImageSource<'static> {
     match icon {
-        Icon::Previous => egui::include_image!("../../assets/icons/previous.svg"),
-        Icon::Play => egui::include_image!("../../assets/icons/play.svg"),
-        Icon::Pause => egui::include_image!("../../assets/icons/pause.svg"),
-        Icon::Next => egui::include_image!("../../assets/icons/next.svg"),
-        Icon::MusicNote => egui::include_image!("../../assets/icons/music.svg"),
-        Icon::ShuffleEnabled => egui::include_image!("../../assets/icons/shuffle_enabled.svg"),
-        Icon::ShuffleDisabled => egui::include_image!("../../assets/icons/shuffle_disabled.svg"),
-        Icon::Volume => egui::include_image!("../../assets/icons/volume.svg"),
-        Icon::LoopEnabled => egui::include_image!("../../assets/icons/loop_enabled.svg"),
-        Icon::LoopDisabled => egui::include_image!("../../assets/icons/loop_disabled.svg"),
+        Icon::Previous => egui::include_image!("../../../assets/icons/previous.svg"),
+        Icon::Play => egui::include_image!("../../../assets/icons/play.svg"),
+        Icon::Pause => egui::include_image!("../../../assets/icons/pause.svg"),
+        Icon::Next => egui::include_image!("../../../assets/icons/next.svg"),
+        Icon::MusicNote => egui::include_image!("../../../assets/icons/music.svg"),
+        Icon::ShuffleEnabled => egui::include_image!("../../../assets/icons/shuffle_enabled.svg"),
+        Icon::ShuffleDisabled => egui::include_image!("../../../assets/icons/shuffle_disabled.svg"),
+        Icon::Volume => egui::include_image!("../../../assets/icons/volume.svg"),
+        Icon::LoopEnabled => egui::include_image!("../../../assets/icons/loop_enabled.svg"),
+        Icon::LoopDisabled => egui::include_image!("../../../assets/icons/loop_disabled.svg"),
     }
 }
 
