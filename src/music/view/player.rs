@@ -1,15 +1,39 @@
 use eframe::egui;
 use egui::{
-    Align, CornerRadius, Direction, Frame, ImageSource, Pos2, Rect, RichText, UiBuilder, Vec2,
+    Align, Color32, CornerRadius, Direction, Frame, ImageSource, Pos2, Rect, RichText, UiBuilder,
+    Vec2,
 };
 
 use super::super::session::MusicSession;
+use super::browser::{BrowserState, show_browser};
 use crate::theme::Palette;
 
 pub struct MusicChanges {
     pub volume_changed: Option<f32>,
     pub shuffle_changed: Option<bool>,
     pub loop_changed: Option<bool>,
+}
+
+#[derive(Clone, Copy, PartialEq, Default)]
+enum MusicView {
+    #[default]
+    Player,
+    Browse,
+}
+
+#[derive(Clone)]
+struct MusicUiState {
+    view: MusicView,
+    browser: BrowserState,
+}
+
+impl Default for MusicUiState {
+    fn default() -> Self {
+        Self {
+            view: MusicView::Player,
+            browser: BrowserState::default(),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -63,6 +87,69 @@ pub fn show_player(
         loop_changed: None,
     };
 
+    let state_id = egui::Id::new("music_ui_state");
+    let mut ui_state = ctx
+        .data_mut(|d| d.get_temp::<MusicUiState>(state_id))
+        .unwrap_or_default();
+
+    egui::TopBottomPanel::bottom("music_tab_bar")
+        .exact_height(64.0)
+        .frame(
+            Frame::new()
+                .fill(palette.card)
+                .stroke(egui::Stroke::new(1.0, palette.border)),
+        )
+        .show(ctx, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal_centered(|ui| {
+                let btn_w = ui.available_width() / 2.0 - 12.0;
+                let btn_h = 44.0;
+
+                for (label, variant) in [
+                    ("Now Playing", MusicView::Player),
+                    ("Browse", MusicView::Browse),
+                ] {
+                    let is_active = ui_state.view == variant;
+                    let (fill, text_color) = if is_active {
+                        (palette.accent, palette.accent_text)
+                    } else {
+                        (Color32::TRANSPARENT, palette.muted)
+                    };
+
+                    let btn = egui::Button::new(
+                        RichText::new(label).size(16.0).color(text_color).strong(),
+                    )
+                    .fill(fill)
+                    .stroke(egui::Stroke::NONE)
+                    .min_size(Vec2::new(btn_w, btn_h));
+
+                    if ui.add(btn).clicked() {
+                        ui_state.view = variant;
+                    }
+                }
+            });
+        });
+
+    match ui_state.view {
+        MusicView::Browse => {
+            show_browser(ctx, palette, session, &mut ui_state.browser);
+        }
+        MusicView::Player => {
+            show_now_playing(ctx, palette, session, &mut changes);
+        }
+    }
+
+    ctx.data_mut(|d| d.insert_temp(state_id, ui_state));
+
+    changes
+}
+
+fn show_now_playing(
+    ctx: &egui::Context,
+    palette: Palette,
+    session: &mut MusicSession,
+    changes: &mut MusicChanges,
+) {
     egui::CentralPanel::default()
         .frame(Frame::new().fill(palette.background))
         .show(ctx, |ui| {
@@ -209,16 +296,16 @@ pub fn show_player(
 
                 let painter = ui.painter();
                 const PROGRESS_BAR_HEIGHT: f32 = 20.0;
-                let track = Rect::from_center_size(
+                let track_bar = Rect::from_center_size(
                     seek_rect.center(),
                     Vec2::new(bar_w, PROGRESS_BAR_HEIGHT),
                 );
 
-                painter.rect_filled(track, 4.0, palette.card_hover);
+                painter.rect_filled(track_bar, 4.0, palette.card_hover);
 
                 let fill = (pos / total * bar_w).clamp(0.0, bar_w);
                 painter.rect_filled(
-                    Rect::from_min_size(track.min, Vec2::new(fill, PROGRESS_BAR_HEIGHT)),
+                    Rect::from_min_size(track_bar.min, Vec2::new(fill, PROGRESS_BAR_HEIGHT)),
                     4.0,
                     palette.accent,
                 );
@@ -375,8 +462,6 @@ pub fn show_player(
                 egui::Image::new(icon(Icon::Volume)).fit_to_exact_size(Vec2::splat(vol_icon_size)),
             );
         });
-
-    changes
 }
 
 fn icon_btn_abs(

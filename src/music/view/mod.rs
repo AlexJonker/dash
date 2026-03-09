@@ -1,3 +1,4 @@
+mod browser;
 mod player;
 
 pub use player::{MusicChanges, show_player};

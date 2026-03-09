@@ -129,18 +129,46 @@ impl MusicSession {
     pub fn shuffle_toggle(&mut self) {
         self.shuffle = !self.shuffle;
 
-        if self.tracks.is_empty() {
+        if self.queue.is_empty() {
             return;
         }
 
         let current = self.current_track_index();
-        if self.queue.is_empty() {
-            self.queue = (0..self.tracks.len()).collect();
+
+        if self.shuffle {
+            let mut rng = rand::rng();
+            let current_track_idx = current.unwrap_or(self.queue[self.queue_pos]);
+
+            let mut rest: Vec<usize> = self
+                .queue
+                .iter()
+                .copied()
+                .filter(|&idx| idx != current_track_idx)
+                .collect();
+            rest.shuffle(&mut rng);
+
+            self.queue = std::iter::once(current_track_idx).chain(rest).collect();
+            self.queue_pos = 0;
+        } else {
+            let current_track_idx = current.unwrap_or(self.queue[self.queue_pos]);
+
+            self.queue.sort_by(|&a, &b| {
+                let ta = &self.tracks[a];
+                let tb = &self.tracks[b];
+                ta.artist
+                    .to_lowercase()
+                    .cmp(&tb.artist.to_lowercase())
+                    .then(ta.album.to_lowercase().cmp(&tb.album.to_lowercase()))
+                    .then(ta.title.to_lowercase().cmp(&tb.title.to_lowercase()))
+            });
+
+            self.queue_pos = self
+                .queue
+                .iter()
+                .position(|&idx| idx == current_track_idx)
+                .unwrap_or(0);
         }
-
-        self.rebuild_queue(current);
     }
-
     pub fn seek_to_secs(&mut self, secs: f32) {
         let Some(player) = &self.player else {
             return;
@@ -310,6 +338,111 @@ impl MusicSession {
         if let Some(player) = &self.player {
             player.set_volume(self.volume);
         }
+    }
+
+    pub fn unique_artists(&self) -> Vec<String> {
+        let mut artists: Vec<String> = self.tracks.iter().map(|t| t.artist.clone()).collect();
+
+        artists.sort_by_key(|a| a.to_lowercase());
+        artists.dedup();
+        artists
+    }
+
+    pub fn albums_for_artist(&self, artist: &str) -> Vec<String> {
+        let mut albums: Vec<String> = self
+            .tracks
+            .iter()
+            .filter(|t| t.artist.eq_ignore_ascii_case(artist))
+            .map(|t| t.album.clone())
+            .collect();
+
+        albums.sort_by_key(|a| a.to_lowercase());
+        albums.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
+        albums
+    }
+
+    pub fn tracks_for_artist(&self, artist: &str) -> Vec<(usize, String, String)> {
+        let mut list: Vec<_> = self
+            .tracks
+            .iter()
+            .enumerate()
+            .filter(|(_, t)| t.artist.eq_ignore_ascii_case(artist))
+            .map(|(i, t)| (i, t.artist.clone(), t.album.clone()))
+            .collect();
+
+        list.sort_by_key(|(i, _, album)| {
+            (album.to_lowercase(), self.tracks[*i].title.to_lowercase())
+        });
+
+        list
+    }
+
+    pub fn tracks_for_album(&self, artist: &str, album: &str) -> Vec<(usize, String, String)> {
+        let mut list: Vec<_> = self
+            .tracks
+            .iter()
+            .enumerate()
+            .filter(|(_, t)| {
+                t.artist.eq_ignore_ascii_case(artist) && t.album.eq_ignore_ascii_case(album)
+            })
+            .map(|(i, t)| (i, t.artist.clone(), t.album.clone()))
+            .collect();
+
+        list.sort_by_key(|(i, _, _)| self.tracks[*i].title.to_lowercase());
+
+        list
+    }
+
+    pub fn track_title(&self, index: usize) -> Option<String> {
+        self.tracks.get(index).map(|t| t.title.clone())
+    }
+
+    pub fn current_track_index_pub(&self) -> Option<usize> {
+        self.current_track_index()
+    }
+
+    pub fn play_all_from_list(&mut self, indices: &[usize]) {
+        if indices.is_empty() {
+            return;
+        }
+
+        self.queue = indices.to_vec();
+
+        if self.shuffle {
+            let mut rng = rand::rng();
+            self.queue.shuffle(&mut rng);
+        }
+
+        self.queue_pos = 0;
+        self.play_current();
+    }
+
+    pub fn play_from_list(&mut self, indices: &[usize], start_pos: usize) {
+        if indices.is_empty() {
+            return;
+        }
+
+        let start_pos = start_pos.min(indices.len() - 1);
+
+        if self.shuffle {
+            let mut rest: Vec<usize> = indices
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != start_pos)
+                .map(|(_, &idx)| idx)
+                .collect();
+
+            let mut rng = rand::rng();
+            rest.shuffle(&mut rng);
+
+            self.queue = std::iter::once(indices[start_pos]).chain(rest).collect();
+            self.queue_pos = 0;
+        } else {
+            self.queue = indices.to_vec();
+            self.queue_pos = start_pos;
+        }
+
+        self.play_current();
     }
 }
 
