@@ -9,6 +9,7 @@ use crate::theme::Palette;
 pub struct MusicChanges {
     pub volume_changed: Option<f32>,
     pub shuffle_changed: Option<bool>,
+    pub loop_changed: Option<bool>,
 }
 
 #[derive(Clone, Copy)]
@@ -21,6 +22,8 @@ enum Icon {
     ShuffleEnabled,
     ShuffleDisabled,
     Volume,
+    LoopEnabled,
+    LoopDisabled,
 }
 
 fn icon(icon: Icon) -> ImageSource<'static> {
@@ -33,6 +36,8 @@ fn icon(icon: Icon) -> ImageSource<'static> {
         Icon::ShuffleEnabled => egui::include_image!("../../assets/icons/shuffle_enabled.svg"),
         Icon::ShuffleDisabled => egui::include_image!("../../assets/icons/shuffle_disabled.svg"),
         Icon::Volume => egui::include_image!("../../assets/icons/volume.svg"),
+        Icon::LoopEnabled => egui::include_image!("../../assets/icons/loop_enabled.svg"),
+        Icon::LoopDisabled => egui::include_image!("../../assets/icons/loop_disabled.svg"),
     }
 }
 
@@ -51,6 +56,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
     let mut changes = MusicChanges {
         volume_changed: None,
         shuffle_changed: None,
+        loop_changed: None,
     };
 
     egui::CentralPanel::default()
@@ -63,21 +69,25 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
             // Sizes
             let cover = (size.y * 0.38).min(260.0);
             let play = 150.0;
-            let btn = 100.0;
+            let btn = 80.0;
+            let nav = 105.0;
+
+            let small_gap = 16.0;
+            let row_w = btn * 2.0 + nav * 2.0 + play + small_gap * 4.0;
 
             let gaps = (16.0, 14.0, 16.0);
-            let shuffle_gap = 16.0;
             let meta_h = 96.0;
             let seek_h = 64.0;
 
-            let block_h =
-                cover + gaps.0 + meta_h + gaps.1 + seek_h + gaps.2 + play + shuffle_gap + btn;
+            let block_h = cover + gaps.0 + meta_h + gaps.1 + seek_h + gaps.2 + play;
             let cover_top = ((size.y - block_h) / 2.0).max(8.0);
 
             // Y Positions
             let meta_top = cover_top + cover + gaps.0;
             let seek_top = meta_top + meta_h + gaps.1;
             let ctrl_top = seek_top + seek_h + gaps.2;
+            let ctrl_left = cx - row_w / 2.0;
+            let ctrl_cy = ctrl_top + play / 2.0;
 
             // Rects
             let cover_rect =
@@ -102,29 +112,36 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 Rect::from_center_size(Pos2::new(cx, seek_top + 54.0), Vec2::new(bar_w, 20.0))
                     .translate(origin);
 
-            let row_w = btn * 2.0 + play + 40.0;
-            let ctrl_left = cx - row_w / 2.0;
+            let shuffle_rect =
+                Rect::from_min_size(Pos2::new(ctrl_left, ctrl_cy - btn / 2.0), Vec2::splat(btn))
+                    .translate(origin);
 
             let prev_rect = Rect::from_min_size(
-                Pos2::new(ctrl_left, ctrl_top + (play - btn) / 2.0),
-                Vec2::splat(btn),
+                Pos2::new(ctrl_left + btn + small_gap, ctrl_cy - nav / 2.0),
+                Vec2::splat(nav),
             )
             .translate(origin);
+
             let play_rect = Rect::from_min_size(
-                Pos2::new(ctrl_left + btn + 20.0, ctrl_top),
+                Pos2::new(ctrl_left + btn + nav + small_gap * 2.0, ctrl_top),
                 Vec2::splat(play),
             )
             .translate(origin);
+
             let next_rect = Rect::from_min_size(
                 Pos2::new(
-                    ctrl_left + btn + 20.0 + play + 20.0,
-                    ctrl_top + (play - btn) / 2.0,
+                    ctrl_left + btn + nav + play + small_gap * 3.0,
+                    ctrl_cy - nav / 2.0,
                 ),
-                Vec2::splat(btn),
+                Vec2::splat(nav),
             )
             .translate(origin);
-            let shuffle_rect = Rect::from_center_size(
-                Pos2::new(cx, ctrl_top + play + shuffle_gap + btn / 2.0),
+
+            let loop_rect = Rect::from_min_size(
+                Pos2::new(
+                    ctrl_left + btn + nav * 2.0 + play + small_gap * 4.0,
+                    ctrl_cy - btn / 2.0,
+                ),
                 Vec2::splat(btn),
             )
             .translate(origin);
@@ -244,6 +261,7 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
                 session.next()
             });
 
+            // Shuffle toggle
             let was_shuffle = session.is_shuffle_enabled();
 
             icon_btn_abs(
@@ -263,6 +281,28 @@ pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -
 
             if session.is_shuffle_enabled() != was_shuffle {
                 changes.shuffle_changed = Some(session.is_shuffle_enabled());
+            }
+
+            // Loop toggle
+            let was_loop = session.is_loop_enabled();
+
+            icon_btn_abs(
+                ui,
+                palette,
+                icon(if session.is_loop_enabled() {
+                    Icon::LoopEnabled
+                } else {
+                    Icon::LoopDisabled
+                }),
+                loop_rect,
+                session.is_loop_enabled(),
+                || {
+                    session.loop_toggle();
+                },
+            );
+
+            if session.is_loop_enabled() != was_loop {
+                changes.loop_changed = Some(session.is_loop_enabled());
             }
 
             // Volume slider

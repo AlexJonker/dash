@@ -19,6 +19,8 @@ struct PersistedSettings {
     music_volume: f32,
     #[serde(default)]
     music_shuffle: bool,
+    #[serde(default)]
+    music_loop: bool,
 }
 
 // Default settings
@@ -31,6 +33,7 @@ impl Default for PersistedSettings {
             music_folder: "/storage/music".to_string(),
             music_volume: 0.8,
             music_shuffle: false,
+            music_loop: false,
         }
     }
 }
@@ -43,6 +46,7 @@ pub struct SettingsState {
     pub music_folder: String,
     pub music_volume: f32,
     pub music_shuffle: bool,
+    pub music_loop: bool,
 }
 
 impl PersistedSettings {
@@ -82,6 +86,7 @@ impl PersistedSettings {
             music_folder: self.music_folder.clone(),
             music_volume: self.music_volume.clamp(0.0, 1.0),
             music_shuffle: self.music_shuffle,
+            music_loop: self.music_loop,
         }
     }
 
@@ -98,6 +103,7 @@ impl PersistedSettings {
             music_folder: state.music_folder,
             music_volume: state.music_volume.clamp(0.0, 1.0),
             music_shuffle: state.music_shuffle,
+            music_loop: state.music_loop,
         }
     }
 }

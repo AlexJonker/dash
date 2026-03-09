@@ -30,10 +30,11 @@ pub struct MusicSession {
     cover_cache: HashMap<usize, Option<egui::TextureHandle>>,
     volume: f32,
     shuffle: bool,
+    loop_track: bool,
 }
 
 impl MusicSession {
-    pub fn new(music_folder: &str, volume: f32, shuffle: bool) -> Self {
+    pub fn new(music_folder: &str, volume: f32, shuffle: bool, loop_track: bool) -> Self {
         let folder = PathBuf::from(music_folder);
 
         let tracks = scan_music_library(&folder);
@@ -56,6 +57,7 @@ impl MusicSession {
             cover_cache: HashMap::new(),
             volume: volume.clamp(0.0, 1.0),
             shuffle,
+            loop_track,
         };
 
         session.apply_volume();
@@ -110,6 +112,14 @@ impl MusicSession {
     pub fn set_volume(&mut self, volume: f32) {
         self.volume = volume.clamp(0.0, 1.0);
         self.apply_volume();
+    }
+
+    pub fn is_loop_enabled(&self) -> bool {
+        self.loop_track
+    }
+
+    pub fn loop_toggle(&mut self) {
+        self.loop_track = !self.loop_track;
     }
 
     pub fn is_shuffle_enabled(&self) -> bool {
@@ -204,7 +214,13 @@ impl MusicSession {
             .unwrap_or(false);
 
         if finished {
-            self.next();
+            if self.loop_track {
+                // If loop is enabled then just play the track again instead of going to the next one.
+                self.play_current();
+            } else {
+                // If loop is not enabled then play th enext track.
+                self.next();
+            }
         }
     }
 

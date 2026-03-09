@@ -30,6 +30,7 @@ impl Controller {
                 &settings_session.music_folder,
                 settings_session.music_volume,
                 settings_session.music_shuffle,
+                settings_session.music_loop,
             ),
             settings_session,
         }
@@ -66,7 +67,14 @@ impl Controller {
                     self.settings_session.music_shuffle = shuffle;
                 }
 
-                if changes.volume_changed.is_some() || changes.shuffle_changed.is_some() {
+                if let Some(loop_track) = changes.loop_changed {
+                    self.settings_session.music_loop = loop_track;
+                }
+
+                if changes.volume_changed.is_some()
+                    || changes.shuffle_changed.is_some()
+                    || changes.loop_changed.is_some()
+                {
                     self.settings_session.save();
                 }
             }
@@ -87,6 +95,7 @@ impl Controller {
                             &self.settings_session.music_folder,
                             self.settings_session.music_volume,
                             self.settings_session.music_shuffle,
+                            self.settings_session.music_loop,
                         );
                     }
 

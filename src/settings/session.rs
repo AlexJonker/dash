@@ -11,6 +11,7 @@ pub struct SettingsSession {
     pub music_folder: String,
     pub music_volume: f32,
     pub music_shuffle: bool,
+    pub music_loop: bool,
 }
 
 impl SettingsSession {
@@ -24,6 +25,7 @@ impl SettingsSession {
             music_folder: state.music_folder,
             music_volume: state.music_volume,
             music_shuffle: state.music_shuffle,
+            music_loop: state.music_loop,
         }
     }
 
@@ -39,6 +41,7 @@ impl SettingsSession {
             music_folder: self.music_folder.clone(),
             music_volume: self.music_volume,
             music_shuffle: self.music_shuffle,
+            music_loop: self.music_loop,
         });
     }
 }
