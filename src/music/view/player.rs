@@ -49,7 +49,11 @@ fn centered_child(ui: &mut egui::Ui, rect: Rect) -> egui::Ui {
     )
 }
 
-pub fn show(ctx: &egui::Context, palette: Palette, session: &mut MusicSession) -> MusicChanges {
+pub fn show_player(
+    ctx: &egui::Context,
+    palette: Palette,
+    session: &mut MusicSession,
+) -> MusicChanges {
     session.tick();
     ctx.request_repaint_after(std::time::Duration::from_millis(16));
 

@@ -1,2 +1,3 @@
 mod player;
-pub use player::{MusicChanges, show};
+
+pub use player::{MusicChanges, show_player};

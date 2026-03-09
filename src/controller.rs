@@ -57,7 +57,7 @@ impl Controller {
             }
             AppView::Music => {
                 let changes: music::MusicChanges =
-                    music::show(ctx, palette, &mut self.music_session);
+                    music::show_player(ctx, palette, &mut self.music_session);
 
                 if let Some(new_volume) = changes.volume_changed {
                     self.settings_session.music_volume = new_volume;

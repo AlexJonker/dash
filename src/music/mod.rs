@@ -2,4 +2,4 @@ mod session;
 mod view;
 
 pub use session::MusicSession;
-pub use view::{MusicChanges, show};
+pub use view::{MusicChanges, show_player};
