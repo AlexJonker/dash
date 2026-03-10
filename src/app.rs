@@ -8,7 +8,7 @@ use crate::theme::apply_style;
 
 pub fn run() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
-        renderer: eframe::Renderer::Wgpu,
+        renderer: eframe::Renderer::Glow,
         multisampling: 0,
         depth_buffer: 0,
         stencil_buffer: 0,
